@@ -20,7 +20,6 @@ import Source.ProcessingFunctions as proc_f
 import Source.PlottingFunctions as plot_f
 from pandas.core.frame import DataFrame
 from typing import Union, Tuple, Any, Optional, Dict, List, Sequence
-del TdmsFile
 
 
 def tdms_to_dataframe(f_name: str) -> DataFrame:
