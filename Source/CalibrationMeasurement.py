@@ -4,9 +4,15 @@ files.
 """
 import copy
 import pickle
+import warnings
 import numpy as np
 import pandas as pd
-from nptdms import TdmsFile
+try:
+    from nptdms import TdmsFile
+except ModuleNotFoundError:
+    warnings.warn("npTDMS package is not found. "
+                  "Features STRONGLY limited.\n"
+                  "Install package, e.g., using in console >>> pip install npTDMS", ImportWarning)
 from scipy.signal.windows import hann
 from scipy.signal import butter, sosfilt
 from scipy.interpolate import PchipInterpolator
@@ -14,6 +20,7 @@ import Source.ProcessingFunctions as proc_f
 import Source.PlottingFunctions as plot_f
 from pandas.core.frame import DataFrame
 from typing import Union, Tuple, Any, Optional, Dict, List, Sequence
+del TdmsFile
 
 
 def tdms_to_dataframe(f_name: str) -> DataFrame:
@@ -27,10 +34,7 @@ def tdms_to_dataframe(f_name: str) -> DataFrame:
 
     :return: Pandas dataframe.
     """
-    if f_name[-5:] == '.pickle':
-        with open(f_name, 'rb') as handle:  # Open pickle file.
-            df = pickle.load(handle)
-    else:
+    try:
         with TdmsFile.read(f_name) as f:  # Open file.
             # Get list of all groups, with all the channels for each group in the TDMS file.
             lst_group_chan = [(group_i.name, chan_j.name)  # (chan_j.group_name, chan_j.name)
@@ -42,12 +46,15 @@ def tdms_to_dataframe(f_name: str) -> DataFrame:
         # Build multi-level (group and channel) header.
         header = pd.MultiIndex.from_tuples(lst_group_chan, names=('Group', 'Channel'))
         df.columns = header  # Rename ugly dataframe header to multi-level header.
+    except NameError:
+        raise NameError("TdmsFile not imported. npTDMS package not installed.\n"
+                        "Install package, e.g., by typing in console: >>> pip install npTDMS")
     # Return dataframe with improved header.
     return df
 
 
 def tdms_safe_read(f_name: str, sample_number_str: str = 'wf_samples', return_properties: bool = False) -> \
-        Union[DataFrame, Tuple[DataFrame, DataFrame]]:
+        Union[None, DataFrame, Tuple[Union[None, DataFrame], Union[None, DataFrame]]]:
     """
     Load TDMS file into Pandas dataframe, similarly to 'tdms_to_dataframe' but in a slower, albeit safer way.
 
@@ -59,43 +66,47 @@ def tdms_safe_read(f_name: str, sample_number_str: str = 'wf_samples', return_pr
 
     :return: If return_properties: DataFrame of data, DataFrame of properties. Else: DataFrame of data.
     """
-    df_prop_file = get_all_properties(file_path=f_name)  # Read the properties of the TDMS data channels.
-    group_chan_lst = list(df_prop_file.index)  # Get list of tuples: [..., (group_i, channel_j), ...].
-    # Get the maximum amount of samples for all the channels in TDMS file.
-    try:  # If the amount of samples is provided as a property of the TDMS channels.
-        n_samp_max = df_prop_file[sample_number_str].max()
-    except KeyError:  # Otherwise, open all channels of the file, and compute their length (number of samples).
-        n_samp_max = 0
-        with TdmsFile.read(f_name) as f:
-            for group_chan_i in group_chan_lst:
-                n_samp_max = max(n_samp_max, len(f[group_chan_i[0]][group_chan_i[1]][:]))
-    # Build the DataFrame with the sample number as index,
-    # and the column names as the (group, channel) names of each channel.
-    df_data = pd.DataFrame(index=np.arange(n_samp_max),
-                           columns=pd.MultiIndex.from_tuples(group_chan_lst, names=('Group', 'Channel')))
-    with TdmsFile.read(f_name) as f:  # Open file.
-        for group_chan_i in group_chan_lst:  # Go through all the (group_i, channel_j).
-            chan_data_i = f[group_chan_i[0]][group_chan_i[1]][:]  # Read data from file.
-            n_chan_len = chan_data_i.size  # Get the amount of samples of the specific channel.
-            try:  # Try to assign data to DataFrame.
-                df_data.loc[:n_chan_len-1, group_chan_i] = chan_data_i
-            except KeyError:  # If the key is not part of the DataFrame, fill it with NaN.
-                df_data.loc[:, group_chan_i] = np.nan
+    try:
+        df_prop_file = get_all_properties(file_path=f_name)  # Read the properties of the TDMS data channels.
+        group_chan_lst = list(df_prop_file.index)  # Get list of tuples: [..., (group_i, channel_j), ...].
+        # Get the maximum amount of samples for all the channels in TDMS file.
+        try:  # If the amount of samples is provided as a property of the TDMS channels.
+            n_samp_max = df_prop_file[sample_number_str].max()
+        except KeyError:  # Otherwise, open all channels of the file, and compute their length (number of samples).
+            n_samp_max = 0
+            with TdmsFile.read(f_name) as f:
+                for group_chan_i in group_chan_lst:
+                    n_samp_max = max(n_samp_max, len(f[group_chan_i[0]][group_chan_i[1]][:]))
+        # Build the DataFrame with the sample number as index,
+        # and the column names as the (group, channel) names of each channel.
+        df_data = pd.DataFrame(index=np.arange(n_samp_max),
+                               columns=pd.MultiIndex.from_tuples(group_chan_lst, names=('Group', 'Channel')))
+        with TdmsFile.read(f_name) as f:  # Open file.
+            for group_chan_i in group_chan_lst:  # Go through all the (group_i, channel_j).
+                chan_data_i = f[group_chan_i[0]][group_chan_i[1]][:]  # Read data from file.
+                n_chan_len = chan_data_i.size  # Get the amount of samples of the specific channel.
+                try:  # Try to assign data to DataFrame.
+                    df_data.loc[:n_chan_len-1, group_chan_i] = chan_data_i
+                except KeyError:  # If the key is not part of the DataFrame, fill it with NaN.
+                    df_data.loc[:, group_chan_i] = np.nan
 
-    # Convert the columns of the DataFrame to the correct data types.
-    dct_types = get_type_dict_channels(df=df_data)  # Get the data types of the first element of each column.
-    try:  # Try to assign all data types for all channels.
-        df_data = df_data.astype(dct_types)
-    except pd._libs.tslibs.np_datetime.OutOfBoundsDatetime:  # If there is an issue with the time channels:
-        # Only convert channels of the float type, i.e. not time.
-        dct_types = {key: dct_types[key] for key in dct_types if dct_types[key] is float}
-        df_data = df_data.astype(dct_types)
+        # Convert the columns of the DataFrame to the correct data types.
+        dct_types = get_type_dict_channels(df=df_data)  # Get the data types of the first element of each column.
+        try:  # Try to assign all data types for all channels.
+            df_data = df_data.astype(dct_types)
+        except pd._libs.tslibs.np_datetime.OutOfBoundsDatetime:  # If there is an issue with the time channels:
+            # Only convert channels of the float type, i.e. not time.
+            dct_types = {key: dct_types[key] for key in dct_types if dct_types[key] is float}
+            df_data = df_data.astype(dct_types)
 
-    if return_properties:  # Not only return the data DataFrame, but also the property DataFrame.
-        df_prop_file.loc[list(dct_types.keys()), 'dtypes'] = list(dct_types.values())
-        return df_data, df_prop_file
-    else:  # Only return the data DataFrame.
-        return df_data
+        if return_properties:  # Not only return the data DataFrame, but also the property DataFrame.
+            df_prop_file.loc[list(dct_types.keys()), 'dtypes'] = list(dct_types.values())
+            return df_data, df_prop_file
+        else:  # Only return the data DataFrame.
+            return df_data
+    except NameError:
+        raise NameError("TdmsFile not imported. npTDMS package not installed.\n"
+                        "Install package, e.g., by typing in console: >>> pip install npTDMS")
 
 
 def get_all_properties(file_path: str) -> DataFrame:
@@ -183,7 +194,10 @@ class PressureAcquisition:
             self.df_data, self.df_prop_data = tdms_safe_read(f_name=file_path, return_properties=True, **kwargs)
         else:  # Default mode.
             self.df_data = tdms_to_dataframe(f_name=file_path)
-            self.df_prop_data = get_all_properties(file_path=file_path)
+            if 'TdmsFile' in globals():
+                self.df_prop_data = get_all_properties(file_path=file_path)
+            else:
+                self.df_prop_data = pd.DataFrame(index=list(self.df_data.columns), columns=['dtypes'])
 
         dct_types = get_type_dict_channels(df=self.df_data)  # Data types of each data column.
         # Write data types to property DataFrame.

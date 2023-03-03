@@ -9,10 +9,10 @@ import Source.BerghTijdemanWhitmoreModels as model_f
 
 # --- INPUT ---
 RUN_MCMC = True  # To actually run the McMC, run this file, or run main(). If False, only shows data and initial guess.
-CASE_NAME = 'BK2_Pinhole_02'  # Name used for export file of McMC output.
+CASE_NAME = 'BK_Pinhole_01'  # Name used for export file of McMC output.
 # - Calibration data.
-FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole_2', 'Flush_1.tdms')
-FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole_2', 'Pinhole_1.tdms')
+FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole', 'Flush_1.tdms')
+FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole', 'Pinhole_1.tdms')
 IN_FLUSH, OUT_FLUSH = [('Untitled', 'Channel 1')], [('Untitled', 'Channel 2')]
 IN_MIC, OUT_MIC = [('Untitled', 'Channel 2')], [('Untitled', 'Channel 1')]
 
@@ -31,7 +31,7 @@ ALPHA_SD = np.array([1.5E-6, 1.8E-2, 6.4E1])
 G_SD = np.array([4.5E-9, 1E-3, 1.92E-1]) * 1E0
 SIG_M_AMP = 0.5  # Measurement error standard deviation of TF amplitude. Used in likelihood PDF.
 SIG_M_PHASE = 0.2  # Measurement error standard deviation of TF phase. Used in likelihood PDF.
-N_SAMPLES = 20000  # Total number of samples in McMC. Includes rejected samples.
+N_SAMPLES = 10000  # Total number of samples in McMC. Includes rejected samples.
 N_UPDATES = N_SAMPLES//10  # Number of samples in McMC after which each time the current acceptance rate is printed.
 SEED = 3751  # Seed used for Gaussian sampling distribution and Uniform sieve in McMC.
 BT_MODE = False  # Boolean to select Bergh & Tijdeman model istead of Whitmore model. Need to provide models for both.
