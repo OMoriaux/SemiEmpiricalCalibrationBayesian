@@ -23,3 +23,5 @@ Required Python install and packages:
 - Matplotlib
 - Pandas (tdms files are read into Pandas DataFrames, arrays with named columns)
 - npTDMS (reads LabVIEW VI output files, i.e. tdms files)
+
+npTDMS will need to be installed in most cases. Either install the package in the user's prefered manner or simply run ">>> pip install npTDMS" in the Python console.
