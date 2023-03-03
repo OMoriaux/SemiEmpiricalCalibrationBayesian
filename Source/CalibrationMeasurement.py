@@ -189,8 +189,13 @@ class PressureAcquisition:
         # Write data types to property DataFrame.
         self.df_prop_data.loc[list(dct_types.keys()), 'dtypes'] = list(dct_types.values())
         # List of all data columns that have as type float.
+        # TODO: Might need a smarter way to catch all relevant channels.
         # Only these will be processed when 'which="all"' for the methods of this class.
-        self.channel_float_type_dct = list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == np.float64].index)
+        self.channel_float_type_dct = np.unique(
+            list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == np.float64].index) +
+            list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == float].index)
+            , axis=0)
+        self.channel_float_type_dct = [tuple(elem) for elem in self.channel_float_type_dct]
 
         self.data_channel_names = list(self.df_prop_data.index)  # Get all the data DataFrame columns.
 

@@ -41,6 +41,9 @@ NOTES = ''  # Optional notes to save in McMC output file.
 
 F_MCMC_OUT = os.path.join('.', 'McMC_Output', f'{CASE_NAME}.pickle')  # Output file.
 
+# --- END OF INPUT ---
+# --------------------
+
 # --- CALIBRATION DATA ---
 cal_flush = cal_c.PressureAcquisition(FILE_FLUSH, safe_read=False)
 cal_mic = cal_c.PressureAcquisition(FILE_MIC, safe_read=False)
@@ -63,7 +66,7 @@ w_masked = 2*np.pi*f_masked  # Band-passed angular frequency array.
 amp_d, phase_d = proc_f.frequency_response(df_tf_full.iloc[:, 0].to_numpy(complex), axis=0)
 amp_d_masked, phase_d_masked = amp_d[mask_arr], phase_d[mask_arr]  # Band-pass calibration data.
 
-# --- BI PREPARATION ---
+# --- BAYESIAN INFERENCE PREPARATION ---
 alpha_full = model_f.dim_to_norm(*LRV_PIN, c0=C0, nu=NU, alpha_complex=False)  # All normalised parameters of pinhole.
 alpha_0 = alpha_full[PAR_SELECT]  # Only parameters used for BI.
 prior_obj = bi_f.PriorArray(mean_array=alpha_0, sd_array=ALPHA_SD[PAR_SELECT])  # Prior PDF object.
@@ -130,6 +133,7 @@ def posterior(alpha_i):
     return a  # Return log posterior PDF.
 
 
+# --- RUN MARKOV-CHAIN MONTE CARLO (mcmc_run=True) OR SIMPLY PLOT DATA AND INITIAL GUESS ---
 def main(mcmc_run=RUN_MCMC):
     """
     Actual code that runs McMC (optional) and plots calibration data with initial guess model TF

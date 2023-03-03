@@ -3,7 +3,6 @@ Helper functions ranging from tube-cavity models (Whitmore and Bergh & Tijdeman)
 the functions for Bayesian inference including pre-processing calibration with band-passing, Markov-chain Monte-Carlo,
 and some processing functions for calibration data.
 
-O.K.M. Moriaux
 __________________________________________________________________________________
 Code used for the Bayesian Inference lecture in the lecture series:
 Remote microphone techniques for the characterization of aeroacoustic sources.
