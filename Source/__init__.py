@@ -21,8 +21,14 @@ Functions and classes:
 - ...
 """
 import sys
+import warnings
 import importlib
-from packaging.version import parse as parse_version
+try:
+    from packaging.version import parse as parse_version
+except ModuleNotFoundError:
+    warnings.warn("packaging package is not found. "
+                  "This is used to test if the required packages are installed. Code works without."
+                  "Can install package, e.g., using in console >>> pip install packaging", ImportWarning)
 # Import the various HelperFunction files.
 from . import BerghTijdemanWhitmoreModels
 from . import BayesianInferenceFunctions
@@ -39,34 +45,35 @@ __maintainer__ = "Olivier Moriaux"
 __email__ = "olivier dot moriaux at vki dot ac dot be"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
 
-req_version = (3, 6)
+req_version = (3, 9)
 cur_version = sys.version_info
 
 if cur_version < req_version:
     raise Exception("Your Python interpreter %s.%s.%s is too old. Please consider upgrading." % cur_version[:3])
 
 
-def _check_versions():
-    for modname, minver in [
-            ("numpy", "1.17"),
-            ("scipy", "1.7.3"),
-            ("pandas", "1.3.3"),
-            ("nptdms", "1.4.0"),
-            ("matplotlib", "3.5.1"),
-            ("seaborn", "0.12.2")
-    ]:
-        module = importlib.import_module(modname)
-        if parse_version(module.__version__) < parse_version(minver):
-            '''
-            raise ImportError(f"HelperFunctions requires {modname}>={minver}; "
-                              f"you have {module.__version__}")
-            '''
-            # TODO: Check the absolute minimum specs, so can use Error instead of Warning.
-            raise ImportWarning(f"HelperFunctions tested with {modname}>={minver}; "
-                                f"you have {module.__version__}. Code might still work for lower versions.")
+if 'parse_version' in globals():
+    def _check_versions():
+        for modname, minver in [
+                ("numpy", "1.17"),  # 1.20
+                ("scipy", "1.7.3"),  # 1.6.0
+                ("pandas", "1.3.3"),
+                ("nptdms", "1.4.0"),
+                ("matplotlib", "3.5.1"),
+                ("seaborn", "0.12.2")
+        ]:
+            module = importlib.import_module(modname)
+            if parse_version(module.__version__) < parse_version(minver):
+                '''
+                raise ImportError(f"HelperFunctions requires {modname}>={minver}; "
+                                  f"you have {module.__version__}")
+                '''
+                # TODO: Check the absolute minimum specs, so can use Error instead of Warning.
+                raise ImportWarning(f"HelperFunctions tested with {modname}>={minver}; "
+                                    f"you have {module.__version__}. Code might still work for lower versions.")
 
 
-_check_versions()
+    _check_versions()
 
 
 __all__ = ["CalibrationMeasurement", "PlottingFunctions", "BayesianInferenceFunctions", "BerghTijdemanWhitmoreModels"]

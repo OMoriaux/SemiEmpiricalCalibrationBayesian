@@ -17,6 +17,7 @@ As for the BI, a simple Metropolis-Hastings Markov-chain Monte Carlo is provided
 - Numpy
 - Scipy
 - Matplotlib
+- Seaborn
 - Pandas (tdms files are read into Pandas DataFrames, arrays with named columns)
 - npTDMS (reads LabVIEW VI output files, i.e. tdms files)
 

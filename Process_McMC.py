@@ -29,7 +29,7 @@ from BK_Pinhole_McMC import model_bt, model_w
 # --- INPUT ---
 F_IN_CASE = 'BK_Pinhole'
 F_MCMC = os.path.join('.', 'McMC_Output', f'{F_IN_CASE}_01.pickle')  # File containing McMC samples.
-SAVE_FIG = True  # Save output figures to PNG.
+SAVE_FIG = False  # Save output figures to PNG.
 LOG_MODE = True  # Set x-axis to logarithmic for the chain evolution figure.
 
 # It is recommended to start without the KDE, figure out the N_BURN_IN parameter from the chain figure.
