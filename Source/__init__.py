@@ -9,7 +9,7 @@ Remote microphone techniques for the characterization of aeroacoustic sources.
 
 __________________________________________________________________________________
 Required Python install and packages:
-- Python 3.6 or newer
+- Python 3.9 or newer (still testing older verions)
 - Numpy
 - Scipy
 - Matplotlib
