@@ -8,8 +8,6 @@ Load Markov chain, shows:
 
 Kernel Density Estimate (KDE) estimates probability density functino(PDF) that was used to get parameter samples of
 chain. Uses sample density over parameter space. KDE code not mine, see source in code.
-
-Author: Olivier Moriaux
 """
 # --- IMPORT PACKAGES ---
 # - Default Python.
@@ -60,6 +58,9 @@ dct_par_labels = {'L_c': 'L/c, s', 'R_nu': r'R $\nu^{-1/2}$, s$^{1/2}$', 'Vv_Vt'
                   'Vt_rmp_s__Vv_rmp_up': r'$V_{v, side}/V_{t, upper}$, -',
                   'Vt_rmp_do__Vv_rmp_up': r'$V_{v, lower}/V_{t, upper}$, -'}
 
+# --- END OF INPUT ---
+# --------------------
+
 # --- LOAD McMC SAMPLES AND INFORMATION ---
 with open(F_MCMC, 'rb') as handle:  # Open pickle file.
     dct_mcmc = pickle.load(handle)
@@ -69,6 +70,7 @@ idx_select = dct_mcmc['MCMC_SETTINGS']['PAR_SELECT']  # Indices of parameters us
 par_str = dct_mcmc['MCMC_SETTINGS']['PAR_STR'][idx_select]  # Parameter label strings.
 bt_bool = dct_mcmc['MCMC_SETTINGS']['BT_MODE']  # Which model is used: Whitmore (False) or Bergh & Tijdeman (True).
 
+# Convert parameter chain values to an easily plottable DataFrame.
 df_chain = pd.DataFrame(alpha_arr, columns=par_str)
 df_chain.columns = [dct_par_labels[key_i] for key_i in df_chain.columns]
 
@@ -77,16 +79,18 @@ alpha_0 = alpha_arr[0, :]  # Initial guess parameter values.
 alpha_map = alpha_arr[np.argmax(rho_arr), :]  # Optimal parameter values (MAP: Maximum A Posteriori).
 print(f'The chain has {n_param} parameters, and {n_samples} samples.')
 
-# Define font-size and font.
+# Define font-size and font for plotting.
 matplotlib.rcParams.update({'font.size': 12, "font.family": 'sans-serif', "font.sans-serif": "Arial"})
 
 # --- CHAIN ---
+# Parameter value chain (in the y-axis), x-axis is the iteration number.
 if PLOT_CHAIN:
     fig_chain, ax_chain = plot_f.plot_chain_df(df=df_chain, n_burn_in=N_BURN_IN, log_mode=LOG_MODE)
     if SAVE_FIG:
         fig_chain.savefig(NAME_OUT + '_Chain.png', dpi=600, transparent=False)
 
 # --- KDE ---
+# Kernel Density Estimate. Estimates the posterior PDF from the McMC samples (of the posterior).
 if PLOT_KDE:
     g_kde = plot_f.plot_kde_df(
         df=df_chain.iloc[N_BURN_IN:, :],
@@ -99,6 +103,7 @@ if PLOT_KDE:
     g_kde.fig.show()
 
 # --- TF ---
+# Transfer function. The main objective of the method, so it's good to visualise.
 if PLOT_TF:
     # Calibration data.
     dct_data = dct_mcmc['DATA']

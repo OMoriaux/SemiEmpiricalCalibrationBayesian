@@ -8,18 +8,29 @@ import numpy as np
 import Source.CalibrationMeasurement as cal_c
 
 # --- INPUT ---
-FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole', 'Flush_1.tdms')
-FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole', 'Pinhole_1.tdms')
-KEY_FLUSH_IN_OUT = ([('Untitled', 'Channel 1')], [('Untitled', 'Channel 2')])
-KEY_MIC_IN_OUT = ([('Untitled', 'Channel 2')], [('Untitled', 'Channel 1')])
+# *** Calibration ***
+# Files for both empirical calibration steps.
+FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole', 'Flush_1.tdms')  # Flush-mounted reference microphone.
+FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole', 'Pinhole_1.tdms')  # Microphone to be calibrated.
+# Data group and channel names [(group_name, channel_name)] for the input and output data for the TFs.
+KEY_FLUSH_IN_OUT = ([('Untitled', 'Channel 1')], [('Untitled', 'Channel 2')])  # For FILE_FLUSH.
+KEY_MIC_IN_OUT = ([('Untitled', 'Channel 2')], [('Untitled', 'Channel 1')])  # For FILE_MIC.
+# The two steps are processed separately, then combined.
+# The names of the TF channels need to be linked with this dictionary: {'old TF channel': 'new TF channel'}.
+# In this case, the old TF is the flush-mounted calibration step, the new TF is the remote microphone calibratino step.
 DCT_TF2TF = {'Untitled_Channel 1>Untitled_Channel 2': 'Untitled_Channel 2>Untitled_Channel 1'}
 
-CALIBRATE_MEASUREMENTS = False
-FILE_MEAS = os.path.join('.', 'TestData', 'BK_Pinhole', 'Flush_1.tdms')
-KEY_MEAS_PLOT = [('Untitled', 'Channel 3')]
-DCT_M2TF = {('Untitled', 'Channel 3'): 'Untitled_Channel 1>Untitled_Channel 2'}
+# *** Pressure measurements ***
+CALIBRATE_MEASUREMENTS = True  # If you want to apply the above TF to the measurement data specified below.
+# File path of unsteady pressure measurement data. The example data presented is fake data,
+# but should still show the impact of applying the TF, especially how spurious resonance is introduced by the TF.
+FILE_MEAS = os.path.join('.', 'TestData', 'BK_Pinhole', 'Fake_example_unsteady_wall_pressure_data.tdms')
+KEY_MEAS_PLOT = [('Untitled', 'Channel 1')]  # The TDMS file group and channel to process.
+# The data group and channel, and which TF column name to apply to it.
+DCT_M2TF = {('Untitled', 'Channel 1'): 'Untitled_Channel 1>Untitled_Channel 2'}
 
-# *** end of input ***
+# --- END OF INPUT ---
+# --------------------
 
 # --- MAIN CODE ---
 # Load 'flush' (flush-mounted reference microphone) calibration step.
@@ -77,15 +88,22 @@ fig_tf.tight_layout(pad=0.1)
 fig_tf.subplots_adjust(left=0.16)
 fig_tf.show()
 
+# If measurement values are available, then one can apply the TF to the measurement data.
 if CALIBRATE_MEASUREMENTS:
     # Load unsteady pressure measurements.
     obj_meas = cal_c.PressureAcquisition(file_path=FILE_MEAS, safe_read=True, fs=51200, window_size=2**15)
+
+    # Show the spectrum of the unsteady pressure measurements BEFORE correcting it for the TF.
+    _, (fig_psd_n_meas, ax_psd_n_meas) = \
+        obj_meas.psd_norm(which=KEY_MEAS_PLOT, visualise=True, alpha=1, prefix='w/o TF: ')
+
     # Apply the previous transfer function to the measurement data.
     # ! One should also apply the sensitivities of the microphones.
     obj_meas.set_transfer_function(
         df_tf=1/df_tf_full, dct_channel_transfer_function=DCT_M2TF, axis=0)
 
-    # Show the spectrum of the unsteady pressure measurements.
-    df_psd_n_meas, (fig_psd_n_meas, ax_psd_n_meas) = \
-        obj_meas.psd_norm(which=KEY_MEAS_PLOT, visualise=True, alpha=1., legend_loc='lower left',
-                          y_str=r"$\Phi_{EE}$, dB/Hz", x_scale='log', x_lim=(1E1, 13.5E3), y_lim=(0, 50))
+    # Show the spectrum of the unsteady pressure measurements AFTER the TF is applied to it.
+    df_psd_n_meas, _ = \
+        obj_meas.psd_norm(which=KEY_MEAS_PLOT, visualise=True, ax=ax_psd_n_meas, alpha=1., prefix='with TF: ',
+                          legend_loc='lower left', y_str=r"$\Phi_{EE}$, dB/Hz", x_scale='log',
+                          x_lim=(1E1, 13.5E3), y_lim=(-50, 80))

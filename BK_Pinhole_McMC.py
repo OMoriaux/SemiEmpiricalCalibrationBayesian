@@ -1,3 +1,8 @@
+"""
+Apply the semi-empirical calibration method on empirical pinhole calibration data.
+
+Exported data can be processed using Process_McMC.py.
+"""
 import os
 import pickle
 import numpy as np
@@ -45,19 +50,21 @@ F_MCMC_OUT = os.path.join('.', 'McMC_Output', f'{CASE_NAME}.pickle')  # Output f
 # --------------------
 
 # --- CALIBRATION DATA ---
+# Ingest data.
 cal_flush = cal_c.PressureAcquisition(FILE_FLUSH, safe_read=False)
 cal_mic = cal_c.PressureAcquisition(FILE_MIC, safe_read=False)
-
+# Define microphone sensitivities.
 s_dct_mic = dict.fromkeys([cal_mic.channel_float_type_dct, cal_mic.data_channel_names][1], 1E3)
 # Don't know the actual sensitivity. Just set flat part of TF amplitude to 1.
 s_dct_mic[('Untitled', 'Channel 3')] = 1.076 * 1E3
 cal_mic.set_sensitivities(dct_channel_sensitivity=s_dct_mic, strict_mode=True, dct_prop_str_new_val=None)
-
+# Estimate the TF from the calibration data.
 df_tf_flush = cal_flush.transfer_function(in_channel=IN_FLUSH, out_channel=OUT_FLUSH, set_property=True)
 df_tf_mic = cal_mic.transfer_function(in_channel=IN_MIC, out_channel=OUT_MIC, set_property=True)
 df_tf_full = cal_flush.add_transfer_function_step(
     df_tf_new=df_tf_mic, dct_old_tf_to_new_tf_channels=dict(zip(df_tf_flush.columns, df_tf_mic.columns)))
 
+# Frequency array used for the fitting model. Band-pass certain frequencies of calibration TF amplitude and phase.
 f_arr = df_tf_full.index.to_numpy(float)  # Frequency array (at which TF is estimated from measurement files).
 # Create masking array for band-passing calibration data to BI.
 mask_arr, f_masked = bi_f.mask_f_data(frequency=f_arr, f_mask_arr=F_MASK_LST)
@@ -68,6 +75,7 @@ amp_d_masked, phase_d_masked = amp_d[mask_arr], phase_d[mask_arr]  # Band-pass c
 
 # --- BAYESIAN INFERENCE PREPARATION ---
 alpha_full = model_f.dim_to_norm(*LRV_PIN, c0=C0, nu=NU, alpha_complex=False)  # All normalised parameters of pinhole.
+# Prior PDF.
 alpha_0 = alpha_full[PAR_SELECT]  # Only parameters used for BI.
 prior_obj = bi_f.PriorArray(mean_array=alpha_0, sd_array=ALPHA_SD[PAR_SELECT])  # Prior PDF object.
 
@@ -109,12 +117,14 @@ def model_w(alpha_i, w_arr=w_masked, alpha_long=alpha_full, par_idx=PAR_SELECT):
     return proc_f.frequency_response(pr)  # Convert complex-valued TF into tuple of amplitude and phase of TF.
 
 
-if BT_MODE:  # Select which model is used for BI.
+# Select which model is used for BI.
+if BT_MODE:  # Bergh & Tijdeman
     model = model_bt
-else:
+else:  # Whitmore
     model = model_w
 
 
+# Function called to find a good fit.
 def posterior(alpha_i):
     """
     Logarithmic posterior PDF used for BI. Computes log rho(alpha_i|d) = log rho(d|alpha_i) + log rho_0 (alpha_i).

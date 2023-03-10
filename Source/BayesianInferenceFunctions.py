@@ -3,7 +3,6 @@ Helper functions for Bayesian inference.
 """
 import numpy as np
 import scipy.stats as stats
-import matplotlib.pyplot as plt
 from typing import Callable, Union, Optional, Tuple, Dict, Sequence
 import numpy.typing as npt
 

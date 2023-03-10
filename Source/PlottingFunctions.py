@@ -63,7 +63,8 @@ def pi_scale(min_val: Union[int, float], max_val: Union[int, float], ax, pi_mino
     ax.set_yticklabels(label_arr)  # Set new major tick labels.
 
 
-def freq_resp_style(ax: plt.Axes, db_bool: bool = False, phase_deg_bool: bool = False, phase_lim: bool = False,
+def freq_resp_style(ax: plt.Axes, db_bool: bool = False, phase_deg_bool: bool = False,
+                    phase_lim: Union[bool, Tuple[float, float]] = False,
                     pi_phase_sub: Optional[float] = None):
     """
     Sets a default styling for frequency response plots.

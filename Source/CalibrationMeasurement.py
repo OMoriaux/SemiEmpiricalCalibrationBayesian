@@ -3,7 +3,6 @@ Main object 'PressureAcquisition' and helper functions used to process microphon
 files.
 """
 import copy
-import pickle
 import warnings
 import numpy as np
 import pandas as pd
