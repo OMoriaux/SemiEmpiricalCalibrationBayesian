@@ -39,7 +39,7 @@ These are Jupyter notebooks that aim to explain in a more step-by-step method th
 
 
 ## 3. Required Python install and packages
-- Python 3.6 or newer
+- Python 3.9 or newer (still testing older versions)
 - Numpy
 - Scipy
 - Matplotlib
