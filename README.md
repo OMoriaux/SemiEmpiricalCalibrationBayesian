@@ -1,4 +1,4 @@
-# Semi-Empirical Calibration Bayesian
+# Semi-Empirical Calibration using Bayesian inference
 A novel post-processing method for empirical calibration data of remote microphone probes (RMP), 
 using Bayesian inference (BI) and pre-existing analytical model for the frequency response of the considered probe.
 http://resolver.tudelft.nl/uuid:7cfd53ce-c443-43af-a0d3-205fa5468e8c
