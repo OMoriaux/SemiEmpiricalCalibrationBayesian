@@ -1,0 +1,47 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Semi-Empirical Calibration using Bayesian inference
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Olivier
+    family-names: Moriaux
+    email: olivier.moriaux@gmail.com
+    affiliation: Delft University of Technology
+repository-code: >-
+  https://github.com/OMoriaux/SemiEmpiricalCalibrationBayesian
+url: >-
+  http://resolver.tudelft.nl/uuid:7cfd53ce-c443-43af-a0d3-205fa5468e8c
+abstract: >-
+  Unsteady surface pressures shed light on the turbulent
+  structures of boundary layer flow, which dictate for a
+  large part the aerodynamic and aeroacoustic performance of
+  aerodynamic bodies submersed in a flow. Remote microphone
+  probes (RMP), e.g., pinhole probes, provide advantages
+  compared to flush-mounted probes because of their reduced
+  sensing area.
+
+  However, they feature a distinct transfer function (TF)
+  that needs to be taken into account for accurate pressure
+  measurements. Many empirical calibration techniques for
+  such probes introduce spurious resonance into the
+  calibration, which propagate to the measurements. In this
+  study, a semi-empirical calibration method is proposed
+  with the aim of removing the spurious resonance in a
+  physics-driven manner that is less reliant on the
+  operator. Bayesian inversion is used to fit an analytic
+  model for the TF of the RMP to the empirical calibration
+  data.
+keywords:
+  - pressure measurement
+  - calibration
+  - Bayesian inference
+  - Remote microphone probe
+  - Microphone
+  - Frequency response
+  - Transfer function
+license: CC-BY-4.0
