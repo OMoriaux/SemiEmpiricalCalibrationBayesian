@@ -176,6 +176,7 @@ def plot_single_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Option
         x_arr = df.index  # x-array.
     else:
         x_arr = df.loc[:, x_channel]  # x-array.
+        df.drop(x_channel, axis=1, inplace=True)  # Drop from channels to plot.
     x_arr *= x_channel_scale  # Scale x-array.
     for i, channel_i in enumerate(df.columns):  # For each channel in DataFrame:
         str_i = label_format % {'prefix': prefix, 'channel_i': channel_i}  # Define label for figure legend.

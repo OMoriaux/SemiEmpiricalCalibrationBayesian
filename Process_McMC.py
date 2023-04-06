@@ -6,7 +6,7 @@ Load Markov chain, shows:
  - Kernel Density Estimate using samples of chain (considering number of burn-in samples).
  - TF (data, model initial guess, model best guess).
 
-Kernel Density Estimate (KDE) estimates probability density functino(PDF) that was used to get parameter samples of
+Kernel Density Estimate (KDE) estimates probability density function (PDF) that was used to get parameter samples of
 chain. Uses sample density over parameter space. KDE code not mine, see source in code.
 """
 # --- IMPORT PACKAGES ---

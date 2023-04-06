@@ -9,9 +9,16 @@ import pandas as pd
 try:
     from nptdms import TdmsFile
 except ModuleNotFoundError:
+    # TODO: Implement as a warning, allowing data to be ingested through pickle- or other files.
+    # Only warn, such that one might still use the code (in Source) for processing of data,
+    # importing the data some other way.
+    '''
     warnings.warn("npTDMS package is not found. "
                   "Features STRONGLY limited.\n"
                   "Install package, e.g., using in console >>> pip install npTDMS", ImportWarning)
+    '''
+    raise ModuleNotFoundError("npTDMS package is not found. Features STRONGLY limited.\n"
+                              "Install package, e.g., using in console >>> pip install npTDMS")
 from scipy.signal.windows import hann
 from scipy.signal import butter, sosfilt
 from scipy.interpolate import PchipInterpolator
@@ -233,8 +240,8 @@ class PressureAcquisition:
         self.sensitivities = None  # Sensitivities of the data DataFrame.
         self.df_tf = None  # Transfer function DataFrame.
 
-    def set_sensitivities(self, dct_channel_sensitivity: Optional[Dict[str, float]] = None, strict_mode: bool = True,
-                          dct_prop_str_new_val: Optional[Dict[str, Any]] = None):
+    def set_sensitivities(self, dct_channel_sensitivity: Optional[Dict[Union[str, Tuple[str, str]], float]] = None,
+                          strict_mode: bool = True, dct_prop_str_new_val: Optional[Dict[str, Any]] = None):
         """
         Assign microphone sensitivities (in mV/Pa) to the various channels.
 
@@ -257,7 +264,7 @@ class PressureAcquisition:
             dct_channel_sensitivity = dict(zip(self.data_channel_names, len(self.data_channel_names)*[1E3]))
         # If strict mode: Check for each data channel if a sensitivity is provided in the dictionary.
         if all(k in dct_channel_sensitivity.keys() for k in self.data_channel_names) or not strict_mode:
-            for channel_i in self.data_channel_names:  # V -> V / (milliV/Pa 1/milli) = Pa.
+            for channel_i in dct_channel_sensitivity.keys():  # V -> V / (milliV/Pa 1/milli) = Pa.
                 self.df_data.loc[:, channel_i] /= dct_channel_sensitivity[channel_i] * 1E-3
                 if dct_prop_str_new_val is not None:
                     for key in dct_prop_str_new_val:
@@ -308,7 +315,7 @@ class PressureAcquisition:
 
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, x_str='t, s'))
     @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
-    def raw(self, which: str = 'all') -> DataFrame:
+    def raw(self, which: Union[str, List[Tuple[str, str]]] = 'all') -> DataFrame:
         """
         Output the 'raw' time-signal (or with the sensitivities applied, depending on the order of operation).
 
@@ -330,7 +337,7 @@ class PressureAcquisition:
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, y_str=r"$\Phi_{EE}$, V$^2$/Hz",
     #                                                            x_scale='log', y_scale='log'))
     @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
-    def psd(self, which: str = 'all', **kwargs) -> DataFrame:
+    def psd(self, which: Union[str, List[Tuple[str, str]]] = 'all', **kwargs) -> DataFrame:
         """
         Output the power spectral densities of the chosen channels.
 
@@ -356,7 +363,7 @@ class PressureAcquisition:
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, y_str=r"$\Phi_{EE}$, dB/Hz",
     #                                                            x_scale='log'))
     @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
-    def psd_norm(self, which: str = 'all', p_ref: float = 2E-5) -> DataFrame:
+    def psd_norm(self, which: Union[str, List[Tuple[str, str]]] = 'all', p_ref: float = 2E-5) -> DataFrame:
         """
         Output the normalised PSD, with reference pressure, [dB/Hz] of the chosen channels.
 
@@ -624,7 +631,8 @@ def sensitivity_calculation(file_in: str, cal_spl: float = 94, f_cal: float = 1E
     pressure_rms = p_ref * 10**(cal_spl/20.)  # Convert from dB to Pa.
 
     with TdmsFile.read(file_in) as f:
-        data_arr = f[channel[0]][channel[1]][:].to_numpy(float) * 1E3  # Microphone voltage data, V -> mV.
+        data_arr = f[channel[0]][channel[1]][:]  # Read microphone voltage data, V.
+    data_arr *= 1E3  # Convert microphone voltage units, V -> mV.
     data_arr *= pre_amp  # Pre-amplification for data.
 
     # Band-pass raw voltage data around the pistonphone frequency +/- delta_f.
