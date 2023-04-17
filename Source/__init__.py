@@ -36,14 +36,14 @@ from . import CalibrationMeasurement
 from . import ProcessingFunctions
 from . import PlottingFunctions
 
-__version__ = '0.5'
+__version__ = '1.0'
 __authors__ = u'Olivier Moriaux'
 __copyright__ = "Copyright 2023, VKI"
 __credits__ = u'Olivier Moriaux, Riccardo Zamponi, Christophe Schram'  # Not sure if latter two want to be included?
 __license__ = "CC BY"
 __maintainer__ = "Olivier Moriaux"
 __email__ = "olivier dot moriaux at vki dot ac dot be"
-__status__ = "Development"  # "Prototype", "Development", or "Production"
+__status__ = "Production"  # "Prototype", "Development", or "Production"
 
 req_version = (3, 9)
 cur_version = sys.version_info
