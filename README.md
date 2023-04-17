@@ -24,6 +24,7 @@ Example code, using these functions, are provided in the main directory (SemiEmp
 - **TestDataIngest**: Example of how to use Source/CalibrationMeasurement to process calibration (and measurement) data.
 - **BK_Pinhole_McMC**: The semi-empirical calibration method using the Whitmore model, applied to the example calibration data. Outputs the results to *./McMC_Output*.
 - **Process_McMC**: Further processing from the McMC results from BK_Pinhole_McMC. Outputs figures to *./McMC_Figures*.
+- **ParaDRAM_BK_Pinhole_McMC**: Similar to *BK_Pinhole_McMC*, albeit using the ParaDRAM implementation of ParaMonte. No processing code provided.
 
 ### c. TutorialsInJupyter
 These are Jupyter notebooks that aim to explain in a more step-by-step method the problem with idea behind the proposed method, and how to apply the method, and process its results.
