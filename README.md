@@ -41,12 +41,12 @@ These are Jupyter notebooks that aim to explain in a more step-by-step method th
 
 
 ## 3. Required Python install and packages
-- Python 3.9 or newer (still testing older versions)
-- Numpy
-- Scipy
-- Matplotlib
-- Seaborn
-- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns)
-- npTDMS (reads LabVIEW VI output files, i.e. tdms files)
+- Python >= 3.7
+- Numpy >= 1.21
+- Scipy >= 1.6.0
+- Matplotlib >= 3.4.1
+- Seaborn >= 0.12.0
+- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
+- npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
 ! npTDMS will need to be installed in most cases. Either install the package in the user's prefered manner or simply run ">>> pip install npTDMS" in the Python console.
