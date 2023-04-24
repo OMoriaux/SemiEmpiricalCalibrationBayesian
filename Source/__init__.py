@@ -9,12 +9,13 @@ Remote microphone techniques for the characterization of aeroacoustic sources.
 
 __________________________________________________________________________________
 Required Python install and packages:
-- Python 3.9 or newer (still testing older verions)
-- Numpy
-- Scipy
-- Matplotlib
-- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns)
-- npTDMS (reads LabVIEW VI output files, i.e. tdms files)
+- Python >= 3.7
+- Numpy >= 1.21
+- Scipy >= 1.6.0
+- Matplotlib >= 3.4.1
+- Seaborn >= 0.12.0
+- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
+- npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
 __________________________________________________________________________________
 Functions and classes:
@@ -36,16 +37,16 @@ from . import CalibrationMeasurement
 from . import ProcessingFunctions
 from . import PlottingFunctions
 
-__version__ = '1.0'
+__version__ = '1.1'
 __authors__ = u'Olivier Moriaux'
 __copyright__ = "Copyright 2023, VKI"
-__credits__ = u'Olivier Moriaux, Riccardo Zamponi, Christophe Schram'  # Not sure if latter two want to be included?
+__credits__ = u'Olivier Moriaux, Riccardo Zamponi, Christophe Schram'
 __license__ = "CC BY"
 __maintainer__ = "Olivier Moriaux"
 __email__ = "olivier dot moriaux at vki dot ac dot be"
 __status__ = "Production"  # "Prototype", "Development", or "Production"
 
-req_version = (3, 9)
+req_version = (3, 7)
 cur_version = sys.version_info
 
 if cur_version < req_version:
@@ -55,20 +56,15 @@ if cur_version < req_version:
 if 'parse_version' in globals():
     def _check_versions():
         for modname, minver in [
-                ("numpy", "1.17"),  # 1.20
-                ("scipy", "1.7.3"),  # 1.6.0
-                ("pandas", "1.3.3"),
+                ("numpy", "1.21"),
+                ("scipy", "1.6.0"),
+                ("pandas", "1.2.0"),
                 ("nptdms", "1.4.0"),
-                ("matplotlib", "3.5.1"),
-                ("seaborn", "0.12.2")
+                ("matplotlib", "3.4.1"),
+                ("seaborn", "0.12.0")
         ]:
             module = importlib.import_module(modname)
             if parse_version(module.__version__) < parse_version(minver):
-                '''
-                raise ImportError(f"HelperFunctions requires {modname}>={minver}; "
-                                  f"you have {module.__version__}")
-                '''
-                # TODO: Check the absolute minimum specs, so can use Error instead of Warning.
                 raise ImportWarning(f"HelperFunctions tested with {modname}>={minver}; "
                                     f"you have {module.__version__}. Code might still work for lower versions.")
 
