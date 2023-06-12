@@ -77,15 +77,15 @@ def freq_resp_style(ax: plt.Axes, db_bool: bool = False, phase_deg_bool: bool = 
 
     :return: Nothing. Applies style to ax objects.
     """
-    ax[1].set_xlabel('f [Hz]')
+    ax[1].set_xlabel('f, Hz')
     if db_bool:
-        ax[0].set_ylabel('|TF| [dB]')
+        ax[0].set_ylabel('|TF|, dB')
     else:
-        ax[0].set_ylabel('|TF| [-]')
+        ax[0].set_ylabel('|TF|, -')
     if phase_deg_bool:
-        ax[1].set_ylabel(r'$\angle$TF [deg]')
+        ax[1].set_ylabel(r'$\angle$TF, deg')
     else:
-        ax[1].set_ylabel(r'$\angle$TF [rad]')
+        ax[1].set_ylabel(r'$\angle$TF, rad')
     for i in range(2):
         ax[i].grid(True, which='major')
         ax[i].grid(True, which='minor', linewidth=0.5)
@@ -234,55 +234,58 @@ def plot_transfer_function_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_
 
     :return: Matplotlib fig and ax object.
     """
+    # Create new or use provided plotting objects.
     if ax is None:
         fig_t, ax_t = plt.subplots(2, 1, figsize=fig_dim, sharex='col')
     else:
         fig_t, ax_t = None, ax
 
-    for i in range(2):
+    # Set the style of the figure.
+    for i in range(2):  # Grid, for both major and minor ticks.
         ax_t[i].grid(True, which='major')
         ax_t[i].grid(True, which='minor', linewidth=0.5)
-    if x_lim is not None:
+    if x_lim is not None:  # Axis limits.
         ax_t[1].set_xlim(*x_lim)
     if y_lim_amp is not None:
         ax_t[0].set_ylim(*y_lim_amp)
     if y_lim_phase is not None:
         pi_scale(min_val=min(y_lim_phase), max_val=max(y_lim_phase), ax=ax_t[1],
                  pi_minor_spacing=minor_phase)
-    if title is not None:
+    if title is not None:  # Set figure title.
         ax_t[0].set_title(title)
-    ax_t[0].set_ylabel(amp_str)
+    ax_t[0].set_ylabel(amp_str)  # Axis labels.
     ax_t[1].set_ylabel(phase_str)
     ax_t[1].set_xlabel(x_str)
-    ax_t[1].set_xscale('log')
+    ax_t[1].set_xscale('log')  # Axis scaling.
     ax_t[0].set_yscale(y_scale)
 
+    # Compute TF amplitude and phase from complex-valued TF array.
     df_amp, df_phase = proc_f.frequency_response(complex_pressure_ratio=df, phase_deg_bool=False, axis=0,
                                                  unwrap_phase=True)
-    f_arr = df.index
+    f_arr = df.index  # Get frequency array, Hz.
 
-    if type(linestyle) == str:
+    if type(linestyle) == str:  # Linestyle. Set same style for all lines if only single string provided.
         linestyle = len(df.columns) * [linestyle]
 
-    if type(color) == str or color is None:
+    if type(color) == str or color is None:  # Color. Set same color for all lines if only single string provided.
         color = len(df.columns) * [color]
 
-    if label_format is None:
+    if label_format is None:  # Format string for plotting labels.
         str_i = None
 
-    for i, channel_i in enumerate(df.columns):
-        if label_format is not None:
+    for i, channel_i in enumerate(df.columns):  # For each channel in DataFrame:
+        if label_format is not None:  # Use format for plotting label.
             str_i = label_format % {'prefix': prefix, 'channel_i': channel_i}
         ax_t[0].plot(f_arr, df_amp[channel_i], alpha=alpha, color=color[i], linestyle=linestyle[i],
-                     linewidth=linewidth, label=str_i)
+                     linewidth=linewidth, label=str_i)  # TF amplitude.
         ax_t[1].plot(f_arr, df_phase[channel_i], alpha=alpha, color=color[i], linestyle=linestyle[i],
-                     linewidth=linewidth, label=str_i)
+                     linewidth=linewidth, label=str_i)  # TF phase.
 
-    if legend_loc is None or legend_loc is True:
+    if legend_loc is None or legend_loc is True:  # Default legend. If no legend, set legend_loc to False.
         ax_t[1].legend()
-    elif legend_loc:  # If it is a string.
+    elif legend_loc:  # If it is a string. False bool doesn't fall into this.
         ax_t[1].legend(loc=legend_loc)
-    if ax is None:
+    if ax is None:  # If axes are not user-defined, plot the figure.
         fig_t.show()
     return fig_t, ax_t
 
@@ -391,24 +394,30 @@ def plot_chain_df(df: DataFrame, n_burn_in: int = 0,
 
 def all_plotting_decorator(
         plot_func: Callable[[DataFrame, Optional[Any]], Tuple[plt.Figure, plt.Axes]] = plot_single_df):
+    # Get arguments of plotting function.
     args_plotting_function_i = inspect.getfullargspec(plot_func).args
 
     def plotting_decorator(func):
         @functools.wraps(func)
         def inner1(*args, **kwargs):
-            try:
+            try:  # Check if one of the arguments is 'visualise'.
                 vis_bool = kwargs.pop('visualise')
-            except KeyError:
+            except KeyError:  # Else by default set False.
                 vis_bool = False
+            # Separate parameters for plotting function.
             kwargs_plotting = {key_i: kwargs[key_i] for key_i in kwargs if key_i in args_plotting_function_i}
+            # Keep remaining parameters for function wrapped by the plotting function.
             kwargs = {key_i: kwargs[key_i] for key_i in kwargs if key_i not in args_plotting_function_i}
+
+            # Run function with non-plotting arguments.
             out_i = func(*args, **kwargs)
 
+            # If plotting, then plot output (DataFrame, depending on plotting function) with plotting arguments.
             if vis_bool:
                 fig_i, ax_i = plot_func(out_i, **kwargs_plotting)
-                return out_i, (fig_i, ax_i)
+                return out_i, (fig_i, ax_i)  # Return function output and Matplotlib figure and axes.
             else:
-                return out_i
+                return out_i  # Return function output alone.
 
         return inner1
     return plotting_decorator
