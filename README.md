@@ -1,8 +1,8 @@
 # Semi-Empirical Calibration using Bayesian inference
 A novel post-processing method for empirical calibration data of remote microphone probes (RMP), 
 using Bayesian inference (BI) and pre-existing analytical model for the frequency response of the considered probe.
-[http://resolver.tudelft.nl/uuid:7cfd53ce-c443-43af-a0d3-205fa5468e8c
-](https://doi.org/10.1016/j.jsv.2023.118197)
+https://doi.org/10.1016/j.jsv.2023.118197
+
 Contains code to process empirical calibration data of RMPs, and unsteady pressure measurements with these RMPs.
 Also includes the code implementation of the Bergh & Tijdeman [1965] model and Whitmore [2006] model for the transfer function of pneumatic systems.
 As for the BI, a simple Metropolis-Hastings Markov-chain Monte Carlo is provided, as well as helper functions to pre-process the data etc.
