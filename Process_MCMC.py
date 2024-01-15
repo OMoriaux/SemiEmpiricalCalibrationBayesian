@@ -1,5 +1,5 @@
 """
-Visualisation for McMC output data, as exported by McMC_BK_Pinhole.py.
+Visualisation for MCMC output data, as exported by MCMC_BK_Pinhole.py.
 
 Load Markov chain, shows:
  - chain for each parameter.
@@ -12,7 +12,7 @@ chain. Uses sample density over parameter space. KDE code not mine, see source i
 # --- IMPORT PACKAGES ---
 # - Default Python.
 import os  # Used to define file paths. Uses correct separators for whatever OS it is run on.
-import pickle  # McMC output data exported as pickle file, to be loaded by processing code.
+import pickle  # MCMC output data exported as pickle file, to be loaded by processing code.
 # - Might require installation from web.
 import matplotlib
 import numpy as np
@@ -22,12 +22,12 @@ import Source.PlottingFunctions as plot_f
 import Source.CalibrationMeasurement as cal_c
 # import Processing_Helper_Functions as p_hf
 # --- CASE TO PROCESS ---
-from BK_Pinhole_McMC import model_bt, model_w
+from BK_Pinhole_MCMC import model_bt, model_w
 
 # --- INPUT ---
 F_IN_CASE = 'BK_Pinhole'
-F_MCMC = os.path.join('.', 'McMC_Output', f'{F_IN_CASE}_01.pickle')  # File containing McMC samples.
-SAVE_FIG = False  # Save output figures to PNG.
+F_MCMC = os.path.join('.', 'MCMC_Output', f'{F_IN_CASE}_01.pickle')  # File containing MCMC samples.
+SAVE_FIG = True  # Save output figures to PNG.
 LOG_MODE = True  # Set x-axis to logarithmic for the chain evolution figure.
 
 # It is recommended to start without the KDE, figure out the N_BURN_IN parameter from the chain figure.
@@ -42,9 +42,9 @@ HDI_LST = [0.99, 0.95, 0.68]
 N_GRID = 128  # Number of points (in both x and y) used to compute KDE on.
 
 # Path and name of PNG-files to save. Will add, e.g., '_TF.png' to the end of 'NAME_OUT'.
-NAME_OUT = os.path.join('.', 'McMC_Figures', F_IN_CASE, F_MCMC.split(os.sep)[-1][:-7])
+NAME_OUT = os.path.join('.', 'MCMC_Figures', F_IN_CASE, F_MCMC.split(os.sep)[-1][:-7])
 
-# For plotting. Converts parameter labels strings defined in McMC sample file into strings used for figures.
+# For plotting. Converts parameter labels strings defined in MCMC sample file into strings used for figures.
 dct_par_labels = {'L_c': 'L/c, s', 'R_nu': r'R $\nu^{-1/2}$, s$^{1/2}$', 'Vv_Vt': r'V$_v$/V$_t$, -',
                   'square_amp': r'c$_{2, |TF|}$, s$^2$', 'slope_amp': r'c$_{1, |TF|}$, s',
                   'intercept_amp': r'c$_{0, |TF|}$, -', 'slope_phase': r'c$_{1, \angle TF}$, rad s',
@@ -61,22 +61,22 @@ dct_par_labels = {'L_c': 'L/c, s', 'R_nu': r'R $\nu^{-1/2}$, s$^{1/2}$', 'Vv_Vt'
 # --- END OF INPUT ---
 # --------------------
 
-# --- LOAD McMC SAMPLES AND INFORMATION ---
+# --- LOAD MCMC SAMPLES AND INFORMATION ---
 with open(F_MCMC, 'rb') as handle:  # Open pickle file.
     dct_mcmc = pickle.load(handle)
-alpha_arr = dct_mcmc.pop('alpha_chain')  # Parameter chain.
-rho_arr = dct_mcmc.pop('rho_chain')  # Posterior PDF at chain parameter value sets.
+theta_arr = dct_mcmc.pop('theta_chain')  # Parameter chain.
+p_arr = dct_mcmc.pop('p_chain')  # Posterior PDF at chain parameter value sets.
 idx_select = dct_mcmc['MCMC_SETTINGS']['PAR_SELECT']  # Indices of parameters used for BI.
 par_str = dct_mcmc['MCMC_SETTINGS']['PAR_STR'][idx_select]  # Parameter label strings.
 bt_bool = dct_mcmc['MCMC_SETTINGS']['BT_MODE']  # Which model is used: Whitmore (False) or Bergh & Tijdeman (True).
 
 # Convert parameter chain values to an easily plottable DataFrame.
-df_chain = pd.DataFrame(alpha_arr, columns=par_str)
+df_chain = pd.DataFrame(theta_arr, columns=par_str)
 df_chain.columns = [dct_par_labels[key_i] for key_i in df_chain.columns]
 
-n_samples, n_param = alpha_arr.shape  # Number of samples in chain, number of parameters used in BI.
-alpha_0 = alpha_arr[0, :]  # Initial guess parameter values.
-alpha_map = alpha_arr[np.argmax(rho_arr), :]  # Optimal parameter values (MAP: Maximum A Posteriori).
+n_samples, n_param = theta_arr.shape  # Number of samples in chain, number of parameters used in BI.
+theta_0 = theta_arr[0, :]  # Initial guess parameter values.
+theta_map = theta_arr[np.argmax(p_arr), :]  # Optimal parameter values (MAP: Maximum A Posteriori).
 print(f'The chain has {n_param} parameters, and {n_samples} samples.')
 
 # Define font-size and font for plotting.
@@ -90,7 +90,7 @@ if PLOT_CHAIN:
         fig_chain.savefig(NAME_OUT + '_Chain.png', dpi=600, transparent=False)
 
 # --- KDE ---
-# Kernel Density Estimate. Estimates the posterior PDF from the McMC samples (of the posterior).
+# Kernel Density Estimate. Estimates the posterior PDF from the MCMC samples (of the posterior).
 if PLOT_KDE:
     g_kde = plot_f.plot_kde_df(
         df=df_chain.iloc[N_BURN_IN:, :],
@@ -136,20 +136,20 @@ if PLOT_TF:
     else:
         model = model_w
 
-    alpha_full = dct_mcmc['MCMC_SETTINGS']['ALPHA_FULL']
-    amp_m_0, phase_m_0 = model(alpha_i=alpha_0, w_arr=w_arr, alpha_long=alpha_full, par_idx=idx_select)
-    amp_m_map, phase_m_map = model(alpha_i=alpha_map, w_arr=w_arr, alpha_long=alpha_full, par_idx=idx_select)
+    theta_full = dct_mcmc['MCMC_SETTINGS']['THETA_FULL']
+    amp_m_0, phase_m_0 = model(theta_i=theta_0, w_arr=w_arr, theta_long=theta_full, par_idx=idx_select)
+    amp_m_map, phase_m_map = model(theta_i=theta_map, w_arr=w_arr, theta_long=theta_full, par_idx=idx_select)
 
     # Plotting.
     fig_tf, ax_tf = plot_f.plot_transfer_function_df(
         df=df_tf_full, fig_dim=(4, 5), color='k', linestyle='--', alpha=0.8, minor_phase=0.25,
         x_lim=(1E2, 13.5E3), y_lim_amp=(0, 4), y_lim_phase=(-1*np.pi-0.1, 0.1))
     # Initial guess.
-    ax_tf[0].plot(f_arr, amp_m_0, color='b', linestyle=':', label=r'$\overline{\alpha}_0$')
-    ax_tf[1].plot(f_arr, phase_m_0, color='b', linestyle=':', label=r'$\overline{\alpha}_0$')
+    ax_tf[0].plot(f_arr, amp_m_0, color='b', linestyle=':', label=r'$\theta_0$')
+    ax_tf[1].plot(f_arr, phase_m_0, color='b', linestyle=':', label=r'$\theta_0$')
     # MAP: Best guess.
-    ax_tf[0].plot(f_arr, amp_m_map, color='r', linestyle='-', label=r'$\overline{\alpha}_{MAP}$')
-    ax_tf[1].plot(f_arr, phase_m_map, color='r', linestyle='-', label=r'$\overline{\alpha}_{MAP}$')
+    ax_tf[0].plot(f_arr, amp_m_map, color='r', linestyle='-', label=r'$\theta_{MAP}$')
+    ax_tf[1].plot(f_arr, phase_m_map, color='r', linestyle='-', label=r'$\theta_{MAP}$')
 
     # Band-removed data.
     for ax_i in ax_tf.flatten():

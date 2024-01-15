@@ -78,17 +78,17 @@ def likelihood_log_pdf(u: npt.NDArray[Union[float, complex]], d: npt.NDArray[Uni
     :return: Value of log likelihood PDF.
     """
     d_hu = d - u
-    log_rho = float(np.sum(stats.norm.logpdf(x=d_hu, scale=sigma_d)))
-    return log_rho
+    log_p = float(np.sum(stats.norm.logpdf(x=d_hu, scale=sigma_d)))
+    return log_p
 
 
 # Markov chain Monte Carlo.
 def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[float, complex]]], float],
-                alpha_0: npt.NDArray[Union[float, complex]], n_samples: int,
+                theta_0: npt.NDArray[Union[float, complex]], n_samples: int,
                 sigma_p: Union[int, float, npt.NDArray[float]], n_updates: int, seed: Optional[int] = None) \
         -> Tuple[npt.NDArray[Union[float, complex]], npt.NDArray[float], Dict[str, int]]:
     """
-    Metropolis-Hastings (Markov chain Monte Carlo, McMC).
+    Metropolis-Hastings (Markov chain Monte Carlo, MCMC).
     Adapted from: https://aerodynamics.lr.tudelft.nl/~rdwight/cfdiv/index.html (Accessed 12/07/2021).
 
     Try to keep the acceptance ratio to ca. 30%.
@@ -110,8 +110,8 @@ def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[fl
     :param n_params: Number of parameters to fit.
     :param posterior_log_pdf: Callable that returns the posterior probability density for input array of parameters.
         Parameter input array contains parameters to fit, must have length of n_params.
-    :param alpha_0: Initial guess of parameters to fit, must have length of n_params.
-    :param n_samples: Number of samples to be taken from posterior using McMC method.
+    :param theta_0: Initial guess of parameters to fit, must have length of n_params.
+    :param n_samples: Number of samples to be taken from posterior using MCMC method.
     :param sigma_p: Variance of parameter sampling multivariate Gaussian.
         If float provided then value used for all parameters.
         If array not of length n_params, then average used as float input.
@@ -125,10 +125,10 @@ def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[fl
         - PDF: Posterior probability for the chain of samples (n_samples).
         - SEED: Dictionary of seed for both the multi-variate normal G and uniform Y.
     """
-    alpha_chain = np.zeros((n_samples, n_params))
+    theta_chain = np.zeros((n_samples, n_params))
     log_pdf_chain = np.zeros(n_samples)
-    alpha_chain[0] = alpha_0
-    log_pdf_chain[0] = posterior_log_pdf(alpha_0)
+    theta_chain[0] = theta_0
+    log_pdf_chain[0] = posterior_log_pdf(theta_0)
     acceptance = 0
     local_acceptance = 0
 
@@ -152,20 +152,20 @@ def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[fl
         g_seed, y_seed = g.random_state, y.random_state
 
     for i in range(1, n_samples):
-        alpha_p = np.abs(g.rvs() + alpha_chain[i-1])  # Take sample from G, sampled around chain[i-1].
-        log_rho_p = posterior_log_pdf(alpha_p)  # Run model to compute posterior probability.
+        theta_p = np.abs(g.rvs() + theta_chain[i-1])  # Take sample from G, sampled around chain[i-1].
+        log_post_p = posterior_log_pdf(theta_p)  # Run model to compute posterior probability.
         # Pi parameter used for acceptance/rejection of sample. Ratio of posterior values.
-        post_frac = log_rho_p - log_pdf_chain[i-1]
+        post_frac = log_post_p - log_pdf_chain[i-1]
 
         y_i = np.log(y.rvs())  # Sample of sieve.
 
         if y_i < post_frac:     # Accept sample.
             acceptance += 1
             local_acceptance += 1
-            alpha_chain[i] = alpha_p
-            log_pdf_chain[i] = log_rho_p
+            theta_chain[i] = theta_p
+            log_pdf_chain[i] = log_post_p
         else:                   # Reject sample. (Just repeat last sample as new one).
-            alpha_chain[i] = alpha_chain[i-1]
+            theta_chain[i] = theta_chain[i-1]
             log_pdf_chain[i] = log_pdf_chain[i-1]
         if i % n_updates == 0:  # Visual update on acceptance ratio. Can be removed in code for improved performance.
             print(f'({i//n_updates}/{n_samples//n_updates}) Acceptance Ratio: '
@@ -173,4 +173,4 @@ def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[fl
             local_acceptance = 0
 
     print(f'Acceptance Ratio: {100. * acceptance / (n_samples - 1):.2f}%')
-    return alpha_chain, log_pdf_chain, {'g': g_seed, 'y': y_seed}
+    return theta_chain, log_pdf_chain, {'g': g_seed, 'y': y_seed}

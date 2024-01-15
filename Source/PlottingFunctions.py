@@ -293,9 +293,9 @@ def plot_transfer_function_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_
 def plot_kde_df(df: DataFrame, kwargs_for_pair_grid: Optional[Dict[str, Any]] = None,
                 kwargs_for_seaborn_theme: Optional[Dict[str, Any]] = None) -> PairGrid:
     """
-    Plot the Kernel Density Estimate (KDE) of a Markov-chain Monte Carlo (McMC) sample DataFrame.
+    Plot the Kernel Density Estimate (KDE) of a Markov-chain Monte Carlo (MCMC) sample DataFrame.
 
-    :param df: DataFrame of McMC samples, where the indices are the samples and the columns the variables
+    :param df: DataFrame of MCMC samples, where the indices are the samples and the columns the variables
     :param kwargs_for_pair_grid: Dictionary of arguments for the Seaborn PairGrid function. Default: diag_sharey=False.
     :param kwargs_for_seaborn_theme: Dictionary of arguments for the Seaborn set_theme function.
 
@@ -313,13 +313,13 @@ def plot_kde_df(df: DataFrame, kwargs_for_pair_grid: Optional[Dict[str, Any]] = 
     g.map_diag(sns.kdeplot, lw=2)
 
     '''
-    f_kde = sns.PairGrid(df_alpha.loc[N_BURN_IN:, :])
+    f_kde = sns.PairGrid(df_theta.loc[N_BURN_IN:, :])
     f_kde.map_upper(sns.scatterplot)
     f_kde.map_lower(sns.kdeplot)
     f_kde.map_diag(sns.kdeplot, lw=3, legend=False)
     '''
     '''
-    f_kde2 = sns.PairGrid(df_alpha.loc[N_BURN_IN:, :], corner=True)  # , hue="species")
+    f_kde2 = sns.PairGrid(df_theta.loc[N_BURN_IN:, :], corner=True)  # , hue="species")
     f_kde2.map_lower(sns.kdeplot, hue=None, levels=5, color="r")
     f_kde2.map_lower(sns.scatterplot, marker="+", color='k')
     f_kde2.map_diag(sns.histplot, element="step", color='k', linewidth=0, kde=True)
@@ -329,7 +329,7 @@ def plot_kde_df(df: DataFrame, kwargs_for_pair_grid: Optional[Dict[str, Any]] = 
     '''
     # Draw a combo histogram and scatterplot with density contours
     f3, ax3 = plt.subplots(figsize=(6, 6))
-    x, y = df_alpha.loc[N_BURN_IN:, r'R $\nu^{-1/2}$, s$^{1/2}$'], df_alpha.loc[N_BURN_IN:, r'V$_v$/V$_t$, -']
+    x, y = df_theta.loc[N_BURN_IN:, r'R $\nu^{-1/2}$, s$^{1/2}$'], df_theta.loc[N_BURN_IN:, r'V$_v$/V$_t$, -']
     sns.scatterplot(x=x, y=y, s=5, color=".15")
     sns.histplot(x=x, y=y, bins=50, pthresh=.1, cmap="mako")
     sns.kdeplot(x=x, y=y, levels=5, color="w", linewidths=1)
@@ -340,9 +340,9 @@ def plot_kde_df(df: DataFrame, kwargs_for_pair_grid: Optional[Dict[str, Any]] = 
 def plot_chain_df(df: DataFrame, n_burn_in: int = 0,
                   log_mode: bool = False) -> Tuple[plt.Figure, plt.Axes]:
     """
-    Plot the parameter value chain, per iteration, of a Markov-chain Monte Carlo (McMC) sample DataFrame.
+    Plot the parameter value chain, per iteration, of a Markov-chain Monte Carlo (MCMC) sample DataFrame.
 
-    :param df: DataFrame of McMC samples, where the indices are the samples and the columns the variables
+    :param df: DataFrame of MCMC samples, where the indices are the samples and the columns the variables
     :param n_burn_in: Number of burn-in samples of the chain. Default: 0.
     :param log_mode: Bool to have a logarithmic iteration-axis (for the complete chain, i.e. with the burn-in included).
         Default: False.
