@@ -32,7 +32,7 @@ These are Jupyter notebooks that aim to explain in a more step-by-step method th
 - **Step 2**: A short overview of how the Whitmore model works, e.g., its parameters.
 - **Step 3**: Setting up the semi-empirical calibration method for the example dataset.
 - **Step 4**: Processing the results of the semi-empirical calibration method.
-- **Extra - Basics of Bayesian Inference** (**WORK IN PROGRESS**): Meant to explain basics of MH MCMC, e.g., the step size of the sampling Gaussian.
+- **Extra - Basics of Bayesian Inference** (**WORK IN PROGRESS**): Meant to explain basics of MH MCMC, e.g., the step size of the Gaussian proposal distribution.
 
 
 ## 2. Sources

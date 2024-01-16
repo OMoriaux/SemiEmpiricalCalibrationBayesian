@@ -22,7 +22,7 @@ import Source.BerghTijdemanWhitmoreModels as model_f
 LRV_MIN = np.array([1E-3, 0.2E-3/2, 7E-9])
 LRV_MAX = np.array([3E-3, 1E-3/2, 20E-9])
 
-# Parameters for tweaking the sampling Gaussian.
+# Parameters for tweaking the Gaussian proposal distribution.
 COV_MULT = 1E0  # Multiplication of the entire covariance matrix.
 OWN_COV = True  # Define the covariance matrix, either using G_SD, or by centring a Gaussian between LRV_MIN and LRV_MAX
 SD_COV_BOOL = False  # Use own input G_SD for the variance of the parameters, instead of based on LRV_MIN and LRV_MAX.
@@ -43,7 +43,7 @@ theta_max = np.array([LRV_MAX[0]/bk_p.C0, LRV_MAX[1]*bk_p.NU**-0.5,
 assert np.all(bk_p.theta_0 >= theta_min)
 assert np.all(bk_p.theta_0 <= theta_max)
 
-# Define the sampling Gaussian covariance matrix.
+# Define the Gaussian proposal distribution covariance matrix.
 if SD_COV_BOOL:
     s = COV_MULT * bk_p.G_SD
 else:
