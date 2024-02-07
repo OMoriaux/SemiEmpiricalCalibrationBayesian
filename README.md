@@ -25,6 +25,7 @@ Example code, using these functions, are provided in the main directory (SemiEmp
 - **BK_Pinhole_MCMC**: The semi-empirical calibration method using the Whitmore model, applied to the example calibration data. Outputs the results to *./MCMC_Output*.
 - **Process_MCMC**: Further processing from the MCMC results from BK_Pinhole_MCMC. Outputs figures to *./MCMC_Figures*.
 - **ParaDRAM_BK_Pinhole_MCMC**: Similar to *BK_Pinhole_MCMC*, albeit using the ParaDRAM implementation of ParaMonte. No processing code provided.
+- **ReadFEMdataset**: Visualisation for the FEM simulation dataset in *./TestData/FEM_PlaneWaveTube*. https://doi.org/10.2514/6.2023-4059.
 
 ### c. TutorialsInJupyter
 These are Jupyter notebooks that aim to explain in a more step-by-step method the problem with idea behind the proposed method, and how to apply the method, and process its results.

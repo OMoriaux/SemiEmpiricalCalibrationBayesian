@@ -1,0 +1,38 @@
+FEM Plane-wave tube
+
+Acoustic FEM simulation data of a plane-wave tube calibrator. For more details on the FEM setup, see:
+    O. K. Moriaux, R. Zamponi, C. F. Schram,
+    Development of a model-driven calibration method for remote microphone probes using bayesian inference,
+    in: AIAA AVIATION 2023 Forum, 2023. doi:10.2514/6.2023-4059.
+
+File: p_3_sensors.csv
+
+First row is a header.
+
+--- Pressure measurement points ---
+
+Geometry (see source above for better figure):
+
+(inlet, sinusoid forcing)
+ |      |
+ |      |
+ |      |
+ |      |
+ |      |
+ |      |
+ |      |      __
+ |      |_____/  |
+ |  o (junction) |o (calibrator)
+ |      ______   |
+ |      |     \__|
+ |__o___|
+   (reference)
+
+--- Columns of CSV file ---
+(0) #Frequency(Hz): Frequency array.
+(1) Pressure(mN/mm^2(kPa))_Imaginary: Imaginary pressure measurement at the "reference" point.
+(2) Pressure(mN/mm^2(kPa))_Real: Real pressure measurement at the "reference" point.
+(3) Pressure(mN/mm^2(kPa))_Imaginary: Imaginary pressure measurement at the "calibrator" point.
+(4) Pressure(mN/mm^2(kPa))_Real: Real pressure measurement at the "calibrator" point.
+(5) Pressure(mN/mm^2(kPa))_Imaginary: Imaginary pressure measurement at the "junction" point.
+(6) Pressure(mN/mm^2(kPa))_Real: Real pressure measurement at the "junction" point.
