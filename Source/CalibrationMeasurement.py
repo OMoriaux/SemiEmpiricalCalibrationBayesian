@@ -3,22 +3,24 @@ Main object 'PressureAcquisition' and helper functions used to process microphon
 files.
 """
 import copy
+import inspect
 import warnings
 import numpy as np
 import pandas as pd
 try:
     from nptdms import TdmsFile
+    TDMS_AVAILABLE = True  # Bool that defines whether or not npTDMS package is loaded.
 except ModuleNotFoundError:
-    # TODO: Implement as a warning, allowing data to be ingested through pickle- or other files.
     # Only warn, such that one might still use the code (in Source) for processing of data,
     # importing the data some other way.
-    '''
     warnings.warn("npTDMS package is not found. "
-                  "Features STRONGLY limited.\n"
+                  "Cannot read TDMS files. Select alternative implemented file type.\n"
                   "Install package, e.g., using in console >>> pip install npTDMS", ImportWarning)
     '''
     raise ModuleNotFoundError("npTDMS package is not found. Features STRONGLY limited.\n"
                               "Install package, e.g., using in console >>> pip install npTDMS")
+    '''
+    TDMS_AVAILABLE = False
 from scipy.signal.windows import hann
 from scipy.signal import butter, sosfilt
 from scipy.interpolate import PchipInterpolator
@@ -27,7 +29,14 @@ import Source.PlottingFunctions as plot_f
 from pandas.core.frame import DataFrame
 from typing import Union, Tuple, Any, Optional, Dict, List, Sequence
 
+# If npTDMS not imported, or use CSV file mode, then use Pandas read_csv instead.
+# Save all possible input parameters to that function for later.
+possible_read_csv_kwargs = inspect.signature(pd.read_csv).parameters.keys()
 
+
+# TODO: Maybe define functions in a way that they, and the functions they are built on, don't crash when called
+#   if npTDMS package not loaded? Also in a way that the docstrings and parameter typing still works well (in Pycharm).
+#   Defining real or placeholder functions in an if-statement, gives duplicate parameter typing. NOT desired.
 def tdms_to_dataframe(f_name: str) -> DataFrame:
     """
     Load TDMS file into Pandas dataframe. Header is multi-level: level 1 is the group name, level 2 is the channel name.
@@ -114,6 +123,123 @@ def tdms_safe_read(f_name: str, sample_number_str: str = 'wf_samples', return_pr
                         "Install package, e.g., by typing in console: >>> pip install npTDMS")
 
 
+# Save all possible input parameters to that function for later.
+possible_tdms_safe_read_kwargs = inspect.signature(tdms_safe_read).parameters.keys()
+
+
+def general_data_file_reader(f_name: str, file_type: str = 'auto',
+                             safe_read: bool = False, return_properties: bool = False,
+                             **kwargs):
+    """
+    A function used to read microphone calibration data files.
+    Switches between all implemented file readers (for different file types).
+
+    Currently implemented:
+        - TDMS (if save_read: 'tdms_safe_read', else: 'tdms_to_dataframe').
+        - CSV (uses pandas.read_csv with default 'index_col'=0 and 'header'=[0, 1],
+            but can be overwritten with 'kwargs').
+
+    :param f_name: File name, with appropriate file type extension.
+    :param file_type: Select file type of file to read. Options:
+        - 'auto': Will use file type extension to select reader function.
+        - 'tdms': Forces the use of TDMS-file reading functions (see safe_read for further info).
+        - 'csv': Forces the use of CSV-file reading function. Uses 'pandas.read_csv', can feed parameters with kwargs.
+            Defaults: 'index_col'=0 and 'header'=[0, 1].
+    :param safe_read: If TDMS file, will select the function 'tdms_safe_read' (True)
+        instead of 'tdms_to_dataframe' (False).
+        Some TDMS files may have raise issues, e.g. with the DateTime formatting, which may be solved with safe_read.
+    :param return_properties: If True, returns not only the DataFrame of the TDMS file contents,
+        but also a DataFrame of the channel properties. Else, only the DataFrame of the TDMS data is returned.
+        If not a TDMS file, will return an empty placeholder DataFrame.
+    :param kwargs: Extra parameters for either 'tdms_safe_read' or 'pandas.read_csv'.
+
+    :return: If return_properties: DataFrame of data, DataFrame of properties. Else: DataFrame of data.
+    """
+    # Switch to choose reading function, i.e. the type of the file.
+    if file_type == 'auto':  # Automatically switch...
+        file_type = f_name.split('.')[-1]  # ... based on file extension.
+    if file_type.lower() == 'tdms':  # Either auto-detected a TDMS extension, or force TDMS file reader.
+        if safe_read:  # Save (but slower) mode.
+            # kwargs that can be provided to the 'tdms_safe_read' function.
+            kwargs_for_safe_read = {key_i: kwargs[key_i] for key_i in kwargs if key_i in possible_tdms_safe_read_kwargs}
+            # If return_properties, dfs_out = (df_data, df_prop_data), else: dfs_out = df_data.
+            dfs_out = tdms_safe_read(f_name=f_name, return_properties=return_properties, **kwargs_for_safe_read)
+        else:  # Default mode.
+            df_data = tdms_to_dataframe(f_name=f_name)  # Read TDMS file.
+            if return_properties:
+                df_prop_data = get_all_properties(file_path=f_name)
+                dfs_out = (df_data, df_prop_data)
+            else:
+                dfs_out = df_data
+    elif file_type.lower() == 'csv':  # Either auto-detected a CSV extension, or force CSV file reader.
+        try:
+            # Only kwargs that can be used by pd.read_csv.
+            kwargs_for_read_csv = {key_i: kwargs[key_i] for key_i in kwargs if key_i in possible_read_csv_kwargs}
+            # Set default values, but don't overwrite if already provided in 'kwargs'.
+            kwargs_for_read_csv = var_kwargs(var_str='index_col', default_val=0, kwargs=kwargs_for_read_csv)
+            kwargs_for_read_csv = var_kwargs(var_str='header', default_val=[0, 1], kwargs=kwargs_for_read_csv)
+            # Read CSV file.
+            df_data = pd.read_csv(f_name, **kwargs_for_read_csv)
+            # Placeholder/Empty DataFrame of data properties.
+            if return_properties:
+                df_prop_data = pd.DataFrame(index=list(df_data.columns), columns=['dtypes'])
+                dfs_out = (df_data, df_prop_data)
+            else:
+                dfs_out = df_data
+        except UnicodeDecodeError:  # If trying to read a TDMS file with read_csv.
+            raise ModuleNotFoundError('npTDMS package not imported. Provide CSV file with data instead of TDMS file. '
+                                      'Import kwargs of pandas.read_csv can be defined in kwargs. '
+                                      'By default index_col=0 and header=[0,1] for multiIndex header.')
+        # TODO: Check what other possible exceptions might pop up.
+    return dfs_out
+
+
+def general_single_channel_reader(f_name: str, channel: Union[str, Tuple[str, str]], file_type='auto', **kwargs):
+    """
+    A function used to read a single channel of microphone calibration data files.
+    Switches between different readers, depending on the file type.
+
+    Currently implemented:
+        - TDMS (simpler than either 'tdms_safe_read' or 'tdms_to_dataframe', therefore less(!) likely to crash).
+        - CSV (uses pandas.read_csv with default 'index_col'=0 and 'header'=[0, 1], but can be overwritten with kwargs).
+            Reads entire file, and then only keeps a single channel.
+
+    :param f_name: File name, with appropriate file type extension.
+    :param channel: Tuple containing the data 'group' and 'channel' in which the data is saved in the tdms file,
+        e.g., tuple = (group, channel) = ('Data', 'MIC').
+    :param file_type: Select file type of file to read. Options:
+        - 'auto': Will use file type extension to select reader function.
+        - 'tdms': Forces the use of TDMS-file reading function.
+        - 'csv': Forces the use of CSV-file reading function. Uses 'pandas.read_csv', can feed parameters with kwargs.
+            Defaults: 'index_col'=0 and 'header'=[0, 1].
+    :param kwargs: Extra parameters for 'pandas.read_csv'.
+
+    :return: Numpy array of the data.
+    """
+    # Switch to choose reading function, i.e. the type of the file.
+    if file_type == 'auto':  # Automatically switch...
+        file_type = f_name.split('.')[-1]  # ... based on file extension.
+
+    if file_type.lower() == 'tdms':  # Either auto-detected a TDMS extension, or force TDMS file reader.
+        with TdmsFile.read(f_name) as f:  # Open TDMS file.
+            data_arr = f[channel[0]][channel[1]][:]  # Read microphone voltage data, V.
+    elif file_type.lower() == 'csv':  # Either auto-detected a CSV extension, or force CSV file reader.
+        try:
+            # Kwargs to be used by pd.read_csv. Add default values.
+            kwargs = var_kwargs(var_str='index_col', default_val=0, kwargs=kwargs)
+            kwargs = var_kwargs(var_str='header', default_val=[0, 1], kwargs=kwargs)
+            df_data = pd.read_csv(f_name, **kwargs)  # Read CSV file.
+            data_arr = df_data.loc[:, channel].to_numpy(float).flatten()  # Keep only single channel as array.
+            del df_data
+        except UnicodeDecodeError:  # Try to read TDMS file with pd.read_csv.
+            data_arr = None
+            raise Warning('npTDMS package not imported. Provide CSV file with data instead of TDMS file. '
+                          'Import kwargs of pandas.read_csv can be defined in kwargs. '
+                          'By default index_col=0 and header=[0,1] for multiIndex header.')
+        # TODO: Check if other exceptions need to be added.
+    return data_arr
+
+
 def get_all_properties(file_path: str) -> DataFrame:
     """
     Return a DataFrame with the properties of each channel in the provided TDMS file.
@@ -194,15 +320,9 @@ class PressureAcquisition:
         """
         # Set default parameters of kwargs.
         kwargs = var_kwargs(var_str='sample_number_str', default_val='wf_samples', kwargs=kwargs)
-        # Read the TDMS file.
-        if safe_read:  # Save (but slower) mode.
-            self.df_data, self.df_prop_data = tdms_safe_read(f_name=file_path, return_properties=True, **kwargs)
-        else:  # Default mode.
-            self.df_data = tdms_to_dataframe(f_name=file_path)
-            if 'TdmsFile' in globals():
-                self.df_prop_data = get_all_properties(file_path=file_path)
-            else:
-                self.df_prop_data = pd.DataFrame(index=list(self.df_data.columns), columns=['dtypes'])
+        # Read the data file.
+        self.df_data, self.df_prop_data = general_data_file_reader(f_name=file_path, safe_read=safe_read,
+                                                                   return_properties=True, **kwargs)
 
         dct_types = get_type_dict_channels(df=self.df_data)  # Data types of each data column.
         # Write data types to property DataFrame.
@@ -608,8 +728,9 @@ def multi_step_calibration(calibration_file_path_list: Sequence[str],
 
 
 def sensitivity_calculation(file_in: str, cal_spl: float = 94, f_cal: float = 1E3,
-                            channel: Tuple[str, str] = ('Data', 'MIC'), fs: float = 51200, delta_f: float = 50,
-                            debug: bool = False, pre_amp: float = 1, p_ref: float = 2E-5) -> float:
+                            channel: Union[str, Tuple[str, str]] = ('Data', 'MIC'), fs: float = 51200,
+                            delta_f: float = 50, debug: bool = False, pre_amp: float = 1, p_ref: float = 2E-5,
+                            **kwargs) -> float:
     """
     Compute microphone sensitivity from pistonphone calibration TDMS file,
     using the root-mean-square value of the band-pass filtered microphone voltage data.
@@ -630,8 +751,8 @@ def sensitivity_calculation(file_in: str, cal_spl: float = 94, f_cal: float = 1E
     """
     pressure_rms = p_ref * 10**(cal_spl/20.)  # Convert from dB to Pa.
 
-    with TdmsFile.read(file_in) as f:
-        data_arr = f[channel[0]][channel[1]][:]  # Read microphone voltage data, V.
+    # Read data file.
+    data_arr = general_single_channel_reader(f_name=file_in, channel=channel, **kwargs)
     data_arr *= 1E3  # Convert microphone voltage units, V -> mV.
     data_arr *= pre_amp  # Pre-amplification for data.
 

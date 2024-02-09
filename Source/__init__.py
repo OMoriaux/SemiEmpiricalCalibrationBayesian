@@ -59,9 +59,9 @@ if 'parse_version' in globals():
                 ("numpy", "1.21"),
                 ("scipy", "1.6.0"),
                 ("pandas", "1.2.0"),
-                ("nptdms", "1.4.0"),
                 ("matplotlib", "3.4.1"),
-                ("seaborn", "0.12.0")
+                ("seaborn", "0.12.0")  # ,
+                # ("nptdms", "1.4.0")
         ]:
             module = importlib.import_module(modname)
             if parse_version(module.__version__) < parse_version(minver):
