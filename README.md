@@ -16,8 +16,8 @@ The core functions of the method are written in the Source directory.
 - **BayesianInferenceFunctions**: Code used to couple data with models using Bayesian Inference (BI); Metropolis-Hastings (MH), Markov-chain Monte Carlo (MCMC).
 - **BerghTijdemanWhitmoreModels**: Implementations of the Bergh & Tijdeman [1965] and Whitmore [2006] models.
 - **CalibrationMeasurement**: Code used to ingest calibration and unsteady pressure measurement data from TDMS files. ! REQUIRES npTDMS
-- **PlottingFunctions**: Functions used to plot the results of the TDMS data and MCMC fitting results.
-- **ProcessingFunctions**: Functions to process the TDMS data into power spectral density, transfer functions etc.
+- **PlottingFunctions**: Functions used to plot the results of the calibration/measurement data and MCMC fitting results.
+- **ProcessingFunctions**: Functions to process the calibration/measurement data (TDMS or CSV files) into power spectral density, transfer functions etc.
 
 ### b. Main (SemiEmpiricalCalibrationBayesian)
 Example code, using these functions, are provided in the main directory (SemiEmpiricalCalibrationBayesian):
@@ -47,7 +47,8 @@ These are Jupyter notebooks that aim to explain in a more step-by-step method th
 - Scipy >= 1.6.0
 - Matplotlib >= 3.4.1
 - Seaborn >= 0.12.0
-- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
-- npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
+- Pandas (calibration/measurement data files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
+- Optional: npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
 ! npTDMS will need to be installed in most cases. Either install the package in the user's prefered manner or simply run ">>> pip install npTDMS" in the Python console.
+If npTDMS is not installed, can still read data from CSV files.

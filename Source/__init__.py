@@ -15,7 +15,7 @@ Required Python install and packages:
 - Matplotlib >= 3.4.1
 - Seaborn >= 0.12.0
 - Pandas (tdms files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
-- npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
+- Optional: npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
 __________________________________________________________________________________
 Functions and classes:
@@ -37,13 +37,13 @@ from . import CalibrationMeasurement
 from . import ProcessingFunctions
 from . import PlottingFunctions
 
-__version__ = '1.1'
+__version__ = '1.2'
 __authors__ = u'Olivier Moriaux'
-__copyright__ = "Copyright 2023, VKI"
+__copyright__ = "Copyright 2023"
 __credits__ = u'Olivier Moriaux, Riccardo Zamponi, Christophe Schram'
 __license__ = "CC BY"
 __maintainer__ = "Olivier Moriaux"
-__email__ = "olivier dot moriaux at vki dot ac dot be"
+__email__ = "olivier dot moriaux at gmail dot com"
 __status__ = "Production"  # "Prototype", "Development", or "Production"
 
 req_version = (3, 7)
@@ -61,7 +61,7 @@ if 'parse_version' in globals():
                 ("pandas", "1.2.0"),
                 ("matplotlib", "3.4.1"),
                 ("seaborn", "0.12.0")  # ,
-                # ("nptdms", "1.4.0")
+                # ("nptdms", "1.4.0")  # Optional now
         ]:
             module = importlib.import_module(modname)
             if parse_version(module.__version__) < parse_version(minver):

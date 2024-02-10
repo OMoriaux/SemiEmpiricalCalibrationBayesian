@@ -1,6 +1,5 @@
 """
-Main object 'PressureAcquisition' and helper functions used to process microphone calibration and measurement TDMS
-files.
+Main object 'PressureAcquisition' and helper functions used to process microphone calibration and measurement files.
 """
 import copy
 import inspect
@@ -123,6 +122,26 @@ def tdms_safe_read(f_name: str, sample_number_str: str = 'wf_samples', return_pr
                         "Install package, e.g., by typing in console: >>> pip install npTDMS")
 
 
+def get_all_properties(file_path: str) -> DataFrame:
+    """
+    Return a DataFrame with the properties of each channel in the provided TDMS file.
+
+    :param file_path: TDMS file name.
+
+    :return: DataFrame containing properties.
+    """
+    prop_dct = {}
+    with TdmsFile.read(file_path) as f:  # Open the file.
+        for group_i in f.groups():
+            for channel_j in group_i.channels():
+                # Assign to key (group_i, channel_j), all the properties of the specific channel.
+                prop_dct[(group_i.name, channel_j.name)] = channel_j.properties
+    # Convert to a DataFrame.
+    df_prop = pd.DataFrame.from_dict(prop_dct)  # , orient='index')
+    df_prop = df_prop.transpose()  # Transpose the DataFrame.
+    return df_prop
+
+
 # Save all possible input parameters to that function for later.
 possible_tdms_safe_read_kwargs = inspect.signature(tdms_safe_read).parameters.keys()
 
@@ -240,26 +259,6 @@ def general_single_channel_reader(f_name: str, channel: Union[str, Tuple[str, st
     return data_arr
 
 
-def get_all_properties(file_path: str) -> DataFrame:
-    """
-    Return a DataFrame with the properties of each channel in the provided TDMS file.
-
-    :param file_path: TDMS file name.
-
-    :return: DataFrame containing properties.
-    """
-    prop_dct = {}
-    with TdmsFile.read(file_path) as f:  # Open the file.
-        for group_i in f.groups():
-            for channel_j in group_i.channels():
-                # Assign to key (group_i, channel_j), all the properties of the specific channel.
-                prop_dct[(group_i.name, channel_j.name)] = channel_j.properties
-    # Convert to a DataFrame.
-    df_prop = pd.DataFrame.from_dict(prop_dct)  # , orient='index')
-    df_prop = df_prop.transpose()  # Transpose the DataFrame.
-    return df_prop
-
-
 def var_kwargs(var_str: str, default_val: Any, kwargs: dict) -> dict:
     """
     See if a specific 'var_str' key is present in the 'kwargs' dictionary,
@@ -295,14 +294,15 @@ class PressureAcquisition:
                  label_format: str = '%(file)s: %(channel)s', axis_format: str = '%(var)s, %(unit)s',
                  key_process: str = '%(file_in)s_%(channel_in)s>%(file_out)s_%(channel_out)s', **kwargs):
         """
-        Object used for reading and processing TDMS files, for microphone calibration and measurements.
+        Object used for reading and processing data files, for microphone calibration and measurements.
 
         Used to:
             1. Estimate TFs from empirical frequency-domain microphone calibrations,
                 combine various calibration steps together.
             2. Assign said TF to a microphone measurement, and compute the power-spectral density.
 
-        :param file_path: File path of the data TDMS file, from either calibration or measurement.
+        :param file_path: File path of the data file, from either calibration or measurement.
+            Currently supported file types: TDMS, CSV.
         :param safe_read: Safe (but slower) mode for reading the TDMS file. Default: False.
         :param fs: Sampling frequency of the data, Hz.
             TODO: Get from file properties instead of having to define, also channel specific.
@@ -732,10 +732,11 @@ def sensitivity_calculation(file_in: str, cal_spl: float = 94, f_cal: float = 1E
                             delta_f: float = 50, debug: bool = False, pre_amp: float = 1, p_ref: float = 2E-5,
                             **kwargs) -> float:
     """
-    Compute microphone sensitivity from pistonphone calibration TDMS file,
+    Compute microphone sensitivity from pistonphone calibration file,
     using the root-mean-square value of the band-pass filtered microphone voltage data.
 
-    :param file_in: TDMS file containing pistonphone calibration data.
+    :param file_in: File containing pistonphone calibration data.
+        Currently supported file types: TDMS, CSV.
     :param cal_spl: Pistonphone calibration amplitude, dB.
     :param f_cal: Pistonphone tone frequency, Hz.
     :param channel: Tuple containing the data 'group' and 'channel' in which the data is saved in the tdms file,
