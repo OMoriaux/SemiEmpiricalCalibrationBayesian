@@ -72,8 +72,8 @@ fig_tf, ax_tf = plot_f.plot_transfer_function_df(
 if np.any(rmp_bool_case_lst):  # Plot the "reference -> calibrator" TF separately.
     kwargs_rmp = {'color': c_tf_arr[rmp_bool_case_lst][0], 'linestyle': ls_tf_arr[rmp_bool_case_lst][0], 'linewidth': 1,
                   'alpha': 0.9, 'label': r'reference$\rightarrow$calibrator'}  # Plotting style arguments.
-    ax_tf[0].plot(f_arr, amp_rmp, **kwargs_rmp)
-    ax_tf[1].plot(f_arr, phase_rmp, **kwargs_rmp)
+    ax_tf[0].plot(f_arr, amp_rmp.to_numpy(float), **kwargs_rmp)
+    ax_tf[1].plot(f_arr, phase_rmp.to_numpy(float), **kwargs_rmp)
 [ax_i.grid(False, which='both') for ax_i in ax_tf]  # Remove grids from axes.
 ax_tf[0].legend(loc='lower left', bbox_to_anchor=(0, 1))  # Place legend in figure.
 # Set figure margins.
