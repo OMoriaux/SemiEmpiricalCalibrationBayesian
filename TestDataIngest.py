@@ -8,10 +8,13 @@ import numpy as np
 import Source.CalibrationMeasurement as cal_c
 
 # --- INPUT ---
+# Select file type (either 'tdms' or 'csv').
+# Only tdms files provided with repository. Can create CSV with 'ConvertTDMS2CSV.py'.
+F_TYPE = 'tdms'
 # *** Calibration ***
 # Files for both empirical calibration steps.
-FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole', 'Flush_1.tdms')  # Flush-mounted reference microphone.
-FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole', 'Pinhole_1.tdms')  # Microphone to be calibrated.
+FILE_FLUSH = os.path.join('.', 'TestData', 'BK_Pinhole', f'Flush_1.{F_TYPE}')  # Flush-mounted reference microphone.
+FILE_MIC = os.path.join('.', 'TestData', 'BK_Pinhole', f'Pinhole_1.{F_TYPE}')  # Microphone to be calibrated.
 # Data group and channel names [(group_name, channel_name)] for the input and output data for the TFs.
 KEY_FLUSH_IN_OUT = ([('Untitled', 'Channel 1')], [('Untitled', 'Channel 2')])  # For FILE_FLUSH.
 KEY_MIC_IN_OUT = ([('Untitled', 'Channel 2')], [('Untitled', 'Channel 1')])  # For FILE_MIC.
@@ -24,7 +27,7 @@ DCT_TF2TF = {'Untitled_Channel 1>Untitled_Channel 2': 'Untitled_Channel 2>Untitl
 CALIBRATE_MEASUREMENTS = True  # If you want to apply the above TF to the measurement data specified below.
 # File path of unsteady pressure measurement data. The example data presented is fake data,
 # but should still show the impact of applying the TF, especially how spurious resonance is introduced by the TF.
-FILE_MEAS = os.path.join('.', 'TestData', 'BK_Pinhole', 'Fake_example_unsteady_wall_pressure_data.tdms')
+FILE_MEAS = os.path.join('.', 'TestData', 'BK_Pinhole', f'Fake_example_unsteady_wall_pressure_data.{F_TYPE}')
 KEY_MEAS_PLOT = [('Untitled', 'Channel 1')]  # The TDMS file group and channel to process.
 # The data group and channel, and which TF column name to apply to it.
 DCT_M2TF = {('Untitled', 'Channel 1'): 'Untitled_Channel 1>Untitled_Channel 2'}
@@ -34,11 +37,12 @@ DCT_M2TF = {('Untitled', 'Channel 1'): 'Untitled_Channel 1>Untitled_Channel 2'}
 
 # --- MAIN CODE ---
 # Load 'flush' (flush-mounted reference microphone) calibration step.
-obj_flush = cal_c.PressureAcquisition(file_path=FILE_FLUSH, safe_read=True, fs=51200, window_size=2**15)
+obj_flush = cal_c.PressureAcquisition(file_path=FILE_FLUSH, safe_read=True, fs=51200, window_size=2**15,
+                                      file_type='auto')
 
 # Visualise the data in several example ways:
 # - The raw, unprocessed time-signals. If the microphone sensitivities are applied before this, then the plotted data
-#    will no longer be voltage but pascale. Currently, it is up to the user to change the axis label accordingly,
+#    will no longer be voltage but pascal. Currently, it is up to the user to change the axis label accordingly,
 #    using 'y_str=...'.
 df_raw, (fig_raw, ax_raw) = obj_flush.raw(which='all', visualise=True, alpha=0.5, legend_loc='lower left',
                                           x_lim=(0, None))  # , y_lim=(-1.2, 1.2))
@@ -67,7 +71,8 @@ df_tf, (fig_tf, ax_tf) = obj_flush.transfer_function(in_channel=KEY_FLUSH_IN_OUT
                                                      linestyle='-.', color='b', fig_dim=(4, 5))
 
 # Load 'mic' (remote microphone probe mounted to calibrator) calibration step.
-obj_mic = cal_c.PressureAcquisition(file_path=FILE_MIC, safe_read=True, fs=51200, window_size=2**15)
+obj_mic = cal_c.PressureAcquisition(file_path=FILE_MIC, safe_read=True, fs=51200, window_size=2**15,
+                                    file_type='auto')
 
 # - 'Normalised' power spectral density.
 df_psd_n_mic, (fig_psd_n_mic, ax_psd_n_mic) = \
@@ -91,7 +96,8 @@ fig_tf.show()
 # If measurement values are available, then one can apply the TF to the measurement data.
 if CALIBRATE_MEASUREMENTS:
     # Load unsteady pressure measurements.
-    obj_meas = cal_c.PressureAcquisition(file_path=FILE_MEAS, safe_read=True, fs=51200, window_size=2**15)
+    obj_meas = cal_c.PressureAcquisition(file_path=FILE_MEAS, safe_read=True, fs=51200, window_size=2**15,
+                                         file_type='auto')
 
     # Show the spectrum of the unsteady pressure measurements BEFORE correcting it for the TF.
     _, (fig_psd_n_meas, ax_psd_n_meas) = \

@@ -177,6 +177,7 @@ def general_data_file_reader(f_name: str, file_type: str = 'auto',
     # Switch to choose reading function, i.e. the type of the file.
     if file_type == 'auto':  # Automatically switch...
         file_type = f_name.split('.')[-1]  # ... based on file extension.
+    dfs_out = None
     if file_type.lower() == 'tdms':  # Either auto-detected a TDMS extension, or force TDMS file reader.
         if safe_read:  # Save (but slower) mode.
             # kwargs that can be provided to the 'tdms_safe_read' function.
