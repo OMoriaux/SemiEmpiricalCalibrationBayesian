@@ -4,7 +4,7 @@ Example code for reading and plotting the FEM plane-wave tube data.
 import os
 import numpy as np
 import pandas as pd
-import Source.PlottingFunctions as plot_f
+import Source.PlottingFunctions as PlotF
 
 # --- INPUT ---
 # File of FEM simulation data.
@@ -30,7 +30,7 @@ fem_complex_data_arr = fem_raw_data_arr[:, ::2]*1j + fem_raw_data_arr[:, 1::2]
 df_fem_complex = pd.DataFrame(index=df_fem_raw_data.index, columns=MICS, data=fem_complex_data_arr, dtype=complex)
 
 # Plot frequency data at measurement points.
-fig_d, ax_d = plot_f.plot_transfer_function_df(
+fig_d, ax_d = PlotF.plot_transfer_function_df(
     df=df_fem_complex, fig_dim=(3, 4), x_lim=(1E2, 1.5E4), y_lim_amp=(1E-3, 1E1), y_lim_phase=(-10*np.pi, 0*np.pi),
     legend_loc='lower left', alpha=0.9, color=('k', 'r', 'b'), linestyle=('-', '--', ':'), linewidth=1.,
     minor_phase=None, y_scale='log')
@@ -64,7 +64,7 @@ if r'reference$\rightarrow$calibrator' in df_fem_tfs.columns:  # If that case (r
 # Plot chosen TFs.
 c_tf_arr = np.array(['k', 'r', 'b', 'g'])[:n_tf]  # List of line colours.
 ls_tf_arr = np.array(['-', '--', ':', '-.'])[:n_tf]  # List of line styles.
-fig_tf, ax_tf = plot_f.plot_transfer_function_df(
+fig_tf, ax_tf = PlotF.plot_transfer_function_df(
     df=df_fem_tfs.loc[:, ~rmp_bool_case_lst], fig_dim=(3, 5), legend_loc=False,
     x_lim=(1E2, 1.5E4), y_lim_amp=(1E-2, 1E2), y_lim_phase=(-1*np.pi-0.1, 1*np.pi+0.1),
     alpha=0.9, color=c_tf_arr[~rmp_bool_case_lst], linestyle=ls_tf_arr[~rmp_bool_case_lst], linewidth=1.,

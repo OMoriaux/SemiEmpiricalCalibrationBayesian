@@ -6,7 +6,7 @@ Can construct CSV files from provided TDMS files of the repository, which can be
 import os
 import numpy as np
 import pandas as pd
-import Source.CalibrationMeasurement as cal_m
+import Source.CalibrationMeasurement as CalM
 
 # --- INPUT ---
 WRITE = False  # Write read DataFrame from TDMS file to CSV file.
@@ -25,9 +25,9 @@ SAFE_READ = False  # TDMS reader mode.
 # --- MAIN CODE ---
 # Read the TDMS file and save into pandas DataFrame.
 if SAFE_READ:  # Save (but possibly slower) mode.
-    df_data, df_prop_data = cal_m.tdms_safe_read(f_name=FILE_IN, return_properties=True)
+    df_data, df_prop_data = CalM.tdms_safe_read(f_name=FILE_IN, return_properties=True)
 else:  # Default mode.
-    df_data = cal_m.tdms_to_dataframe(f_name=FILE_IN)
+    df_data = CalM.tdms_to_dataframe(f_name=FILE_IN)
     df_prop_data = None
 
 if WRITE:  # Write DataFrame to CSV file.

@@ -243,7 +243,8 @@ def f_phi_ij(vt_i_vv_j: float, c_i_c_j: float, phi_l_i: npt.NDArray[complex],
 # --- BERGH & TIJDEMAN MODEL ---
 # Specific probe topologies.
 def bt_pinhole(w_arr: npt.NDArray[float], k_l_pre: float, alpha_pre: complex, vv_vt: float, sigma: float = 0.,
-               gamma: float = 1.4, k_n: float = 1., pr: float = 0.7, p1_p0: Optional[npt.NDArray[complex]] = 0.,
+               gamma: float = 1.4, k_n: float = 1., pr: float = 0.7,
+               p1_p0: Optional[Union[float, npt.NDArray[complex]]] = 0.,
                k_l_pre_1: Optional[float] = 0., alpha_pre_1: Optional[complex] = 0., vt1_vv0: Optional[float] = 0.,
                l1_l0: Optional[float] = 0.) -> npt.NDArray[complex]:
     """
@@ -294,7 +295,7 @@ def bt_pinhole(w_arr: npt.NDArray[float], k_l_pre: float, alpha_pre: complex, vv
 def bt_series(w_arr: npt.NDArray[float], k_l_pre_0: float, alpha_pre_0: complex, vv_vt_0: float,
               k_l_pre_1: float, alpha_pre_1: complex, vv_vt_1: float, vt1_vv0: float, l1_l0: float, sigma_0: float = 0.,
               k_n0: float = 1., sigma_1: float = 0., k_n1: float = 1., gamma: float = 1.4, pr: float = 0.7,
-              p2_p1: Optional[npt.NDArray[complex]] = 0., k_l_pre_2: Optional[float] = 0.,
+              p2_p1: Optional[Union[float, npt.NDArray[complex]]] = 0., k_l_pre_2: Optional[float] = 0.,
               alpha_pre_2: Optional[complex] = 0., vt2_vv1: Optional[float] = 0., l2_l1: Optional[float] = 0.) -> \
         Tuple[npt.NDArray[complex], npt.NDArray[complex]]:
     """

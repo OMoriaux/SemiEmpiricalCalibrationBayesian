@@ -23,8 +23,8 @@ except ModuleNotFoundError:
 from scipy.signal.windows import hann
 from scipy.signal import butter, sosfilt
 from scipy.interpolate import PchipInterpolator
-import Source.ProcessingFunctions as proc_f
-import Source.PlottingFunctions as plot_f
+import Source.ProcessingFunctions as ProcF
+import Source.PlottingFunctions as PlotF
 from pandas.core.frame import DataFrame
 from typing import Union, Tuple, Any, Optional, Dict, List, Sequence
 
@@ -240,6 +240,7 @@ def general_single_channel_reader(f_name: str, channel: Union[str, Tuple[str, st
     if file_type == 'auto':  # Automatically switch...
         file_type = f_name.split('.')[-1]  # ... based on file extension.
 
+    data_arr = None
     if file_type.lower() == 'tdms':  # Either auto-detected a TDMS extension, or force TDMS file reader.
         with TdmsFile.read(f_name) as f:  # Open TDMS file.
             data_arr = f[channel[0]][channel[1]][:]  # Read microphone voltage data, V.
@@ -252,7 +253,6 @@ def general_single_channel_reader(f_name: str, channel: Union[str, Tuple[str, st
             data_arr = df_data.loc[:, channel].to_numpy(float).flatten()  # Keep only single channel as array.
             del df_data
         except UnicodeDecodeError:  # Try to read TDMS file with pd.read_csv.
-            data_arr = None
             raise Warning('npTDMS package not imported. Provide CSV file with data instead of TDMS file. '
                           'Import kwargs of pandas.read_csv can be defined in kwargs. '
                           'By default index_col=0 and header=[0,1] for multiIndex header.')
@@ -333,8 +333,8 @@ class PressureAcquisition:
         # Only these will be processed when 'which="all"' for the methods of this class.
         self.channel_float_type_dct = np.unique(
             list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == np.float64].index) +
-            list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == float].index)
-            , axis=0)
+            list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == float].index),
+            axis=0)
         self.channel_float_type_dct = [tuple(elem) for elem in self.channel_float_type_dct]
 
         self.data_channel_names = list(self.df_prop_data.index)  # Get all the data DataFrame columns.
@@ -435,7 +435,7 @@ class PressureAcquisition:
         self.df_data.loc[:, self.channel_float_type_dct] = np.fft.irfft(pre, axis=axis)
 
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, x_str='t, s'))
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_single_df)
     def raw(self, which: Union[str, List[Tuple[str, str]]] = 'all') -> DataFrame:
         """
         Output the 'raw' time-signal (or with the sensitivities applied, depending on the order of operation).
@@ -457,7 +457,7 @@ class PressureAcquisition:
 
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, y_str=r"$\Phi_{EE}$, V$^2$/Hz",
     #                                                            x_scale='log', y_scale='log'))
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_single_df)
     def psd(self, which: Union[str, List[Tuple[str, str]]] = 'all', **kwargs) -> DataFrame:
         """
         Output the power spectral densities of the chosen channels.
@@ -474,7 +474,7 @@ class PressureAcquisition:
         channel_lst = self._which(which=which)  # Get channels to process.
         kwargs_new = self._default_settings(kwargs)
         # Compute spectrum for all the channels.
-        f_arr, psd_arr = proc_f.f_psd(data=self.df_data.loc[:, channel_lst].dropna(), **kwargs_new)
+        f_arr, psd_arr = ProcF.f_psd(data=self.df_data.loc[:, channel_lst].dropna(), **kwargs_new)
         df_psd = pd.DataFrame(data=psd_arr, index=f_arr,
                               columns=pd.MultiIndex.from_tuples(channel_lst, names=self.df_data.columns.names))
         df_psd.index.name = self.axis_format % {'var': self.frequency_var_and_unit[0],
@@ -483,7 +483,7 @@ class PressureAcquisition:
 
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, y_str=r"$\Phi_{EE}$, dB/Hz",
     #                                                            x_scale='log'))
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_single_df)
     def psd_norm(self, which: Union[str, List[Tuple[str, str]]] = 'all', p_ref: float = 2E-5) -> DataFrame:
         """
         Output the normalised PSD, with reference pressure, [dB/Hz] of the chosen channels.
@@ -498,11 +498,11 @@ class PressureAcquisition:
         :return: DataFrame.
         """
         df_psd = self.psd(which=which)  # Get non-normalised PSD.
-        return proc_f.f_spectra(data_psd=df_psd, p_ref=p_ref)  # Normalise.
+        return ProcF.f_spectra(data_psd=df_psd, p_ref=p_ref)  # Normalise.
 
     # @plot_f.all_plotting_decorator(plot_func=functools.partial(plot_f.plot_single_df, y_str=r"$\gamma^2_{xy}$, -",
     #                                                            x_scale='log'))
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_single_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_single_df)
     def cross_coherence(self, in_channel: List[Tuple[str, str]], out_channel: List[Tuple[str, str]], **kwargs) -> \
             DataFrame:
         """
@@ -529,8 +529,8 @@ class PressureAcquisition:
         kwargs_new = self._default_settings(kwargs)
 
         # Compute coherence.
-        f_arr, coh_arr = proc_f.f_coherence(x=data_in_out.loc[:, in_channel], y=data_in_out.loc[:, out_channel],
-                                            **kwargs_new)
+        f_arr, coh_arr = ProcF.f_coherence(x=data_in_out.loc[:, in_channel], y=data_in_out.loc[:, out_channel],
+                                           **kwargs_new)
         # Column names for the output DataFrame.
         process_columns = [self._tuple_in_out_to_key(in_tuple=in_channel[i], out_tuple=out_channel[i])
                            for i in range(len(in_channel))]
@@ -540,7 +540,7 @@ class PressureAcquisition:
                                                 'unit': self.frequency_var_and_unit[1]}
         return df_coh
 
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_transfer_function_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_transfer_function_df)
     def transfer_function(self, in_channel: List[Tuple[str, str]], out_channel: List[Tuple[str, str]],
                           set_property: bool = True, **kwargs) -> DataFrame:
         """
@@ -572,8 +572,8 @@ class PressureAcquisition:
         kwargs_new = var_kwargs(var_str='return_onesided', default_val=True, kwargs=kwargs_new)
 
         # Compute transfer function.
-        f_arr, tf_arr = proc_f.tf_estimate(x=data_in_out.loc[:, in_channel], y=data_in_out.loc[:, out_channel],
-                                           **kwargs_new)
+        f_arr, tf_arr = ProcF.tf_estimate(x=data_in_out.loc[:, in_channel], y=data_in_out.loc[:, out_channel],
+                                          **kwargs_new)
         # Column names for the output DataFrame.
         process_columns = [self._tuple_in_out_to_key(in_tuple=in_channel[i], out_tuple=out_channel[i])
                            for i in range(len(in_channel))]
@@ -584,7 +584,7 @@ class PressureAcquisition:
             self.df_tf = df_tf
         return df_tf.copy(True)
 
-    @plot_f.all_plotting_decorator(plot_func=plot_f.plot_transfer_function_df)
+    @PlotF.all_plotting_decorator(plot_func=PlotF.plot_transfer_function_df)
     def add_transfer_function_step(self, df_tf_new: DataFrame,
                                    dct_old_tf_to_new_tf_channels: Optional[Dict[str, str]] = None, axis: int = 0) -> \
             DataFrame:

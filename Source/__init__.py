@@ -28,7 +28,8 @@ try:
     from packaging.version import parse as parse_version
 except ModuleNotFoundError:
     warnings.warn("packaging package is not found. "
-                  "This is used to test if the required packages are installed. Code works without."
+                  "This is used to test if the required packages are installed. "
+                  "Code works without, comment out line 57-73."
                   "Can install package, e.g., using in console >>> pip install packaging", ImportWarning)
 # Import the various HelperFunction files.
 from . import BerghTijdemanWhitmoreModels

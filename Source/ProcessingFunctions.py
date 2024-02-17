@@ -104,4 +104,3 @@ def f_coherence(x: type_arr_etc, y: type_arr_etc, fs: float = 51200, **kwargs) -
     :return: (Frequency array, Cross-coherence array).
     """
     return sp.signal.coherence(x=x, y=y, fs=fs, **kwargs)  # f, coh
-
