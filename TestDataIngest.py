@@ -5,7 +5,7 @@ unsteady pressure measurements with these transfer functions.
 """
 import os
 import numpy as np
-import Source.CalibrationMeasurement as cal_c
+import Source.CalibrationMeasurement as CalM
 
 # --- INPUT ---
 # Select file type (either 'tdms' or 'csv').
@@ -20,7 +20,7 @@ KEY_FLUSH_IN_OUT = ([('Untitled', 'Channel 1')], [('Untitled', 'Channel 2')])  #
 KEY_MIC_IN_OUT = ([('Untitled', 'Channel 2')], [('Untitled', 'Channel 1')])  # For FILE_MIC.
 # The two steps are processed separately, then combined.
 # The names of the TF channels need to be linked with this dictionary: {'old TF channel': 'new TF channel'}.
-# In this case, the old TF is the flush-mounted calibration step, the new TF is the remote microphone calibratino step.
+# In this case, the old TF is the flush-mounted calibration step, the new TF is the remote microphone calibration step.
 DCT_TF2TF = {'Untitled_Channel 1>Untitled_Channel 2': 'Untitled_Channel 2>Untitled_Channel 1'}
 
 # *** Pressure measurements ***
@@ -37,8 +37,8 @@ DCT_M2TF = {('Untitled', 'Channel 1'): 'Untitled_Channel 1>Untitled_Channel 2'}
 
 # --- MAIN CODE ---
 # Load 'flush' (flush-mounted reference microphone) calibration step.
-obj_flush = cal_c.PressureAcquisition(file_path=FILE_FLUSH, safe_read=True, fs=51200, window_size=2**15,
-                                      file_type='auto')
+obj_flush = CalM.PressureAcquisition(file_path=FILE_FLUSH, safe_read=True, fs=51200, window_size=2 ** 15,
+                                     file_type='auto')
 
 # Visualise the data in several example ways:
 # - The raw, unprocessed time-signals. If the microphone sensitivities are applied before this, then the plotted data
@@ -71,8 +71,8 @@ df_tf, (fig_tf, ax_tf) = obj_flush.transfer_function(in_channel=KEY_FLUSH_IN_OUT
                                                      linestyle='-.', color='b', fig_dim=(4, 5))
 
 # Load 'mic' (remote microphone probe mounted to calibrator) calibration step.
-obj_mic = cal_c.PressureAcquisition(file_path=FILE_MIC, safe_read=True, fs=51200, window_size=2**15,
-                                    file_type='auto')
+obj_mic = CalM.PressureAcquisition(file_path=FILE_MIC, safe_read=True, fs=51200, window_size=2 ** 15,
+                                   file_type='auto')
 
 # - 'Normalised' power spectral density.
 df_psd_n_mic, (fig_psd_n_mic, ax_psd_n_mic) = \
@@ -96,8 +96,8 @@ fig_tf.show()
 # If measurement values are available, then one can apply the TF to the measurement data.
 if CALIBRATE_MEASUREMENTS:
     # Load unsteady pressure measurements.
-    obj_meas = cal_c.PressureAcquisition(file_path=FILE_MEAS, safe_read=True, fs=51200, window_size=2**15,
-                                         file_type='auto')
+    obj_meas = CalM.PressureAcquisition(file_path=FILE_MEAS, safe_read=True, fs=51200, window_size=2 ** 15,
+                                        file_type='auto')
 
     # Show the spectrum of the unsteady pressure measurements BEFORE correcting it for the TF.
     _, (fig_psd_n_meas, ax_psd_n_meas) = \

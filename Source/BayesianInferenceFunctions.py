@@ -133,7 +133,7 @@ def mcmc_update(n_params: int, posterior_log_pdf: Callable[[npt.NDArray[Union[fl
     local_acceptance = 0
 
     # Covariance matrix of multivariate Gaussian used for parameter samples.
-    if type(sigma_p) != int and type(sigma_p) != float:
+    if type(sigma_p) is not int and type(sigma_p) is not float:
         if len(sigma_p) == n_params:
             p = np.diag(sigma_p ** 2)
         else:

@@ -243,7 +243,8 @@ def f_phi_ij(vt_i_vv_j: float, c_i_c_j: float, phi_l_i: npt.NDArray[complex],
 # --- BERGH & TIJDEMAN MODEL ---
 # Specific probe topologies.
 def bt_pinhole(w_arr: npt.NDArray[float], k_l_pre: float, alpha_pre: complex, vv_vt: float, sigma: float = 0.,
-               gamma: float = 1.4, k_n: float = 1., pr: float = 0.7, p1_p0: Optional[npt.NDArray[complex]] = 0.,
+               gamma: float = 1.4, k_n: float = 1., pr: float = 0.7,
+               p1_p0: Optional[Union[float, npt.NDArray[complex]]] = 0.,
                k_l_pre_1: Optional[float] = 0., alpha_pre_1: Optional[complex] = 0., vt1_vv0: Optional[float] = 0.,
                l1_l0: Optional[float] = 0.) -> npt.NDArray[complex]:
     """
@@ -294,7 +295,7 @@ def bt_pinhole(w_arr: npt.NDArray[float], k_l_pre: float, alpha_pre: complex, vv
 def bt_series(w_arr: npt.NDArray[float], k_l_pre_0: float, alpha_pre_0: complex, vv_vt_0: float,
               k_l_pre_1: float, alpha_pre_1: complex, vv_vt_1: float, vt1_vv0: float, l1_l0: float, sigma_0: float = 0.,
               k_n0: float = 1., sigma_1: float = 0., k_n1: float = 1., gamma: float = 1.4, pr: float = 0.7,
-              p2_p1: Optional[npt.NDArray[complex]] = 0., k_l_pre_2: Optional[float] = 0.,
+              p2_p1: Optional[Union[float, npt.NDArray[complex]]] = 0., k_l_pre_2: Optional[float] = 0.,
               alpha_pre_2: Optional[complex] = 0., vt2_vv1: Optional[float] = 0., l2_l1: Optional[float] = 0.) -> \
         Tuple[npt.NDArray[complex], npt.NDArray[complex]]:
     """
@@ -473,7 +474,7 @@ class ElementBT:
         _ve_vt_j = self.vv_vt * (self.sigma + 1 / _k_j) * _n_j
 
         # Child
-        # If has a child element, then add contribution to Ve/Vt.
+        # If the object has a child element, then add contribution to Ve/Vt.
         if self.child is not None:
             p_child__p_base, _alpha_j1, _phi_l_j1 = self.child.p_ratio(w=w)
             _ve_vt_j_term2 = self.vt_child__vv_elem*self.vv_vt*_phi_l_j1 * (_phi_l_j * self.l_child__l_elem)**-2 * \
@@ -591,7 +592,7 @@ def whitmore_element_complex_impedance(w_arr: npt.NDArray[float], k_l_pre: float
 
     :return: Array of complex impedance.
     """
-    # i: elem | j: base | k: elements that use elem. i as base element
+    # i: elem | j: base | k: elements that use element i as base element
     # Wave-number after multiplying the wave-number constant with the angular frequency array.
     _k_l_i = k_l_pre * w_arr
     # Shear wave number after multiplying the Shear wave number constant with the angular frequency array.

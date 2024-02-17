@@ -10,8 +10,8 @@ from pandas.core.frame import DataFrame
 from matplotlib.ticker import MultipleLocator
 from typing import Union, Optional, Tuple, Sequence, Any, Callable, Dict
 from seaborn.axisgrid import PairGrid
-import Source.ProcessingFunctions as proc_f
-import Source.CalibrationMeasurement as cal_c
+import Source.ProcessingFunctions as ProcF
+import Source.CalibrationMeasurement as CalM
 
 
 # *** DATA PLOTTING ***
@@ -101,7 +101,7 @@ def freq_resp_style(ax: plt.Axes, db_bool: bool = False, phase_deg_bool: bool = 
 def plot_single_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Optional[Sequence] = None,
                    x_channel: Optional[Tuple[str, str]] = None, x_channel_scale: float = 1.,
                    x_lim: Optional[Sequence] = None, y_lim: Optional[Sequence] = None,
-                   legend_loc: Optional[Union[str, Tuple[float, float]]] = None, title: Optional[str] = None,
+                   legend_loc: Optional[Union[str, bool, Tuple[float, float]]] = None, title: Optional[str] = None,
                    alpha: float = 1., color: Optional[Union[str, Sequence]] = None,
                    linestyle: Optional[Union[str, Sequence]] = '-', linewidth: float = 1.5, prefix: str = '',
                    label_format: str = '%(prefix)s%(channel_i)s', x_scale: str = 'linear', y_scale: str = 'linear',
@@ -163,14 +163,14 @@ def plot_single_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Option
     if y_lim is not None:
         ax_t.set_ylim(*y_lim)
 
-    if type(linestyle) == str:  # Linestyle. Set same style for all lines if only single string provided.
+    if type(linestyle) is str:  # Linestyle. Set same style for all lines if only single string provided.
         linestyle = len(df.columns) * [linestyle]
 
-    if type(color) == str or color is None:  # Color. Set same color for all lines if only single string provided.
+    if type(color) is str or color is None:  # Color. Set same color for all lines if only single string provided.
         color = len(df.columns) * [color]
 
-    if label_format is None:
-        str_i = None
+    # if label_format is None:
+    str_i = None
 
     if x_channel is None:
         x_arr = df.index  # x-array.
@@ -179,13 +179,15 @@ def plot_single_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Option
         df.drop(x_channel, axis=1, inplace=True)  # Drop from channels to plot.
     x_arr *= x_channel_scale  # Scale x-array.
     for i, channel_i in enumerate(df.columns):  # For each channel in DataFrame:
-        str_i = label_format % {'prefix': prefix, 'channel_i': channel_i}  # Define label for figure legend.
+        if label_format is not None:  # Use format for plotting label.
+            str_i = label_format % {'prefix': prefix, 'channel_i': channel_i}  # Define label for figure legend.
         ax_t.plot(x_arr, df[channel_i], alpha=alpha, linewidth=linewidth, linestyle=linestyle[i], color=color[i],
                   label=str_i)  # Plot the data.
 
-    if legend_loc is not None:  # If the legend location is None, no legend is plotted.
+    if legend_loc is None or legend_loc is True:  # Default legend. If no legend, set legend_loc to False or None.
+        ax_t.legend()
+    elif type(legend_loc) is str:  # If it is a string. False bool doesn't fall into this.
         ax_t.legend(loc=legend_loc)
-
     if ax is None:  # If axes are not user-defined, plot the figure.
         fig_t.show()
     return fig_t, ax_t  # Return both figure and axis used for plotting. If axis user-provided, figure is None.
@@ -194,7 +196,7 @@ def plot_single_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Option
 def plot_transfer_function_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_dim: Optional[Sequence] = None,
                               x_lim: Optional[Sequence] = None, y_lim_amp: Optional[Sequence] = None,
                               y_lim_phase: Optional[Sequence] = None,
-                              legend_loc: Optional[Union[str, Tuple[float, float]]] = None,
+                              legend_loc: Optional[Union[str, bool, Tuple[float, float]]] = None,
                               title: Optional[str] = None, alpha: float = 1.,
                               color: Optional[Union[str, Sequence]] = None,
                               linestyle: Optional[Union[str, Sequence]] = '-', linewidth: float = 1.5, prefix: str = '',
@@ -260,18 +262,18 @@ def plot_transfer_function_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_
     ax_t[0].set_yscale(y_scale)
 
     # Compute TF amplitude and phase from complex-valued TF array.
-    df_amp, df_phase = proc_f.frequency_response(complex_pressure_ratio=df, phase_deg_bool=False, axis=0,
-                                                 unwrap_phase=True)
+    df_amp, df_phase = ProcF.frequency_response(complex_pressure_ratio=df, phase_deg_bool=False, axis=0,
+                                                unwrap_phase=True)
     f_arr = df.index  # Get frequency array, Hz.
 
-    if type(linestyle) == str:  # Linestyle. Set same style for all lines if only single string provided.
+    if type(linestyle) is str:  # Linestyle. Set same style for all lines if only single string provided.
         linestyle = len(df.columns) * [linestyle]
 
-    if type(color) == str or color is None:  # Color. Set same color for all lines if only single string provided.
+    if type(color) is str or color is None:  # Color. Set same color for all lines if only single string provided.
         color = len(df.columns) * [color]
 
-    if label_format is None:  # Format string for plotting labels.
-        str_i = None
+    # if label_format is None:  # Format string for plotting labels.
+    str_i = None
 
     for i, channel_i in enumerate(df.columns):  # For each channel in DataFrame:
         if label_format is not None:  # Use format for plotting label.
@@ -281,9 +283,9 @@ def plot_transfer_function_df(df: DataFrame, ax: Optional[plt.Axes] = None, fig_
         ax_t[1].plot(f_arr, df_phase[channel_i], alpha=alpha, color=color[i], linestyle=linestyle[i],
                      linewidth=linewidth, label=str_i)  # TF phase.
 
-    if legend_loc is None or legend_loc is True:  # Default legend. If no legend, set legend_loc to False.
+    if legend_loc is None or legend_loc is True:  # Default legend. If no legend, set legend_loc to False or None.
         ax_t[1].legend()
-    elif legend_loc:  # If it is a string. False bool doesn't fall into this.
+    elif type(legend_loc) is str:  # If it is a string. False bool doesn't fall into this.
         ax_t[1].legend(loc=legend_loc)
     if ax is None:  # If axes are not user-defined, plot the figure.
         fig_t.show()
@@ -303,7 +305,7 @@ def plot_kde_df(df: DataFrame, kwargs_for_pair_grid: Optional[Dict[str, Any]] = 
     """
     if kwargs_for_pair_grid is None:
         kwargs_for_pair_grid = {}
-    kwargs_for_pair_grid = cal_c.var_kwargs(var_str='diag_sharey', default_val=False, kwargs=kwargs_for_pair_grid)
+    kwargs_for_pair_grid = CalM.var_kwargs(var_str='diag_sharey', default_val=False, kwargs=kwargs_for_pair_grid)
     if kwargs_for_seaborn_theme is None:
         kwargs_for_seaborn_theme = {}
     sns.set_theme(**kwargs_for_seaborn_theme)
@@ -421,4 +423,3 @@ def all_plotting_decorator(
 
         return inner1
     return plotting_decorator
-

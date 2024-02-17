@@ -6,11 +6,11 @@ Exported data can be processed using Process_MCMC.py.
 import os
 import pickle
 import numpy as np
-import Source.PlottingFunctions as plot_f
-import Source.ProcessingFunctions as proc_f
-import Source.CalibrationMeasurement as cal_c
-import Source.BayesianInferenceFunctions as bi_f
-import Source.BerghTijdemanWhitmoreModels as model_f
+import Source.PlottingFunctions as PlotF
+import Source.ProcessingFunctions as ProcF
+import Source.CalibrationMeasurement as CalM
+import Source.BayesianInferenceFunctions as BiF
+import Source.BerghTijdemanWhitmoreModels as BtWM
 
 # --- INPUT ---
 RUN_MCMC = True  # To actually run the MCMC, run this file, or run main(). If False, only shows data and initial guess.
@@ -29,7 +29,7 @@ GAMMA, PR, C0, NU = 1.4, 0.7, 340.26, 1.46E-5  # Conditions used in model.
 # - Bayesian Inference.
 # Frequency mask list. Band-passes the TF data used for BI. List of lists,
 # i.e. [[start frequency 0, end frequency 0], [start frequency 1, end frequency 1], ...].
-F_MASK_LST = [[1E2, 2.3E3], [4.5E3, 8E3]]
+F_MASK_LST = [[1E2, 2.4E3], [4.5E3, 8E3]]
 # Standard deviation of prior probability density function (PDF). Considers normalised parameters.
 THETA_SD = np.array([1.5E-6, 1.8E-2, 6.4E1])
 # Standard deviation of Gaussian used for sampling of MCMC. Considers normalised parameters.
@@ -51,8 +51,8 @@ F_MCMC_OUT = os.path.join('.', 'MCMC_Output', f'{CASE_NAME}.pickle')  # Output f
 
 # --- CALIBRATION DATA ---
 # Ingest data.
-cal_flush = cal_c.PressureAcquisition(FILE_FLUSH, safe_read=False)
-cal_mic = cal_c.PressureAcquisition(FILE_MIC, safe_read=False)
+cal_flush = CalM.PressureAcquisition(FILE_FLUSH, safe_read=False)
+cal_mic = CalM.PressureAcquisition(FILE_MIC, safe_read=False)
 # Define microphone sensitivities.
 s_dct_mic = dict.fromkeys([cal_mic.channel_float_type_dct, cal_mic.data_channel_names][1], 1E3)
 # Don't know the actual sensitivity. Just set flat part of TF amplitude to 1.
@@ -67,17 +67,17 @@ df_tf_full = cal_flush.add_transfer_function_step(
 # Frequency array used for the fitting model. Band-pass certain frequencies of calibration TF amplitude and phase.
 f_arr = df_tf_full.index.to_numpy(float)  # Frequency array (at which TF is estimated from measurement files).
 # Create masking array for band-passing calibration data to BI.
-mask_arr, f_masked = bi_f.mask_f_data(frequency=f_arr, f_mask_arr=F_MASK_LST)
+mask_arr, f_masked = BiF.mask_f_data(frequency=f_arr, f_mask_arr=F_MASK_LST)
 w_masked = 2*np.pi*f_masked  # Band-passed angular frequency array.
 # Calibration TF amplitude and phase.
-amp_d, phase_d = proc_f.frequency_response(df_tf_full.iloc[:, 0].to_numpy(complex), axis=0)
+amp_d, phase_d = ProcF.frequency_response(df_tf_full.iloc[:, 0].to_numpy(complex), axis=0)
 amp_d_masked, phase_d_masked = amp_d[mask_arr], phase_d[mask_arr]  # Band-pass calibration data.
 
 # --- BAYESIAN INFERENCE PREPARATION ---
-theta_full = model_f.dim_to_norm(*LRV_PIN, c0=C0, nu=NU, alpha_complex=False)  # All normalised parameters of pinhole.
+theta_full = BtWM.dim_to_norm(*LRV_PIN, c0=C0, nu=NU, alpha_complex=False)  # All normalised parameters of pinhole.
 # Prior PDF.
 theta_0 = theta_full[PAR_SELECT]  # Only parameters used for BI.
-prior_obj = bi_f.PriorArray(mean_array=theta_0, sd_array=THETA_SD[PAR_SELECT])  # Prior PDF object.
+prior_obj = BiF.PriorArray(mean_array=theta_0, sd_array=THETA_SD[PAR_SELECT])  # Prior PDF object.
 
 
 # Models (both B&T and W) used for BI to calibration data.
@@ -94,9 +94,9 @@ def model_bt(theta_i, w_arr=w_masked, theta_long=theta_full, par_idx=PAR_SELECT)
     """
     theta_long[par_idx] = theta_i  # Insert sample theta_i parameters into long parameter array.
     # Build here whatever kind of model best represents the probe from which calibration data is available. Example:
-    pr = model_f.bt_pinhole(w_arr=w_arr, k_l_pre=theta_long[0], alpha_pre=theta_long[1]*1j**1.5, vv_vt=theta_long[2],
-                            sigma=0, gamma=GAMMA, k_n=1., pr=PR, p1_p0=0)  # Complex-valued TF array.
-    return proc_f.frequency_response(pr)  # Convert complex-valued TF into tuple of amplitude and phase of TF.
+    pr = BtWM.bt_pinhole(w_arr=w_arr, k_l_pre=theta_long[0], alpha_pre=theta_long[1] * 1j ** 1.5, vv_vt=theta_long[2],
+                         sigma=0, gamma=GAMMA, k_n=1., pr=PR, p1_p0=0)  # Complex-valued TF array.
+    return ProcF.frequency_response(pr)  # Convert complex-valued TF into tuple of amplitude and phase of TF.
 
 
 def model_w(theta_i, w_arr=w_masked, theta_long=theta_full, par_idx=PAR_SELECT):
@@ -112,9 +112,9 @@ def model_w(theta_i, w_arr=w_masked, theta_long=theta_full, par_idx=PAR_SELECT):
     """
     theta_long[par_idx] = theta_i  # Insert sample theta_i parameters into long parameter array.
     # Build here whatever kind of model best represents the probe from which calibration data is available. Example:
-    pr = model_f.whitmore_pinhole(k_l_pre=theta_long[0], alpha_pre=theta_long[1]*1j**1.5, vv_vt=theta_long[2],
-                                  w_arr=w_arr, gamma=GAMMA, pr=PR, sum_i_phi_ij=0)  # Complex-valued TF array.
-    return proc_f.frequency_response(pr)  # Convert complex-valued TF into tuple of amplitude and phase of TF.
+    pr = BtWM.whitmore_pinhole(k_l_pre=theta_long[0], alpha_pre=theta_long[1] * 1j ** 1.5, vv_vt=theta_long[2],
+                               w_arr=w_arr, gamma=GAMMA, pr=PR, sum_i_phi_ij=0)  # Complex-valued TF array.
+    return ProcF.frequency_response(pr)  # Convert complex-valued TF into tuple of amplitude and phase of TF.
 
 
 # Select which model is used for BI.
@@ -138,8 +138,8 @@ def posterior(theta_i):
     a = 0  # log posterior PDF. Written like this so three contributions below can be commented out, if desired.
     # Commenting-out prior can show whether prior is constricting fit too much.
     a += prior_obj.log_pdf(array_i=theta_i)  # Add log prior PDF.
-    a += bi_f.likelihood_log_pdf(u=amp_m, d=amp_d_masked, sigma_d=SIG_M_AMP)  # Add log likelihood of TF amplitude.
-    a += bi_f.likelihood_log_pdf(u=phase_m, d=phase_d_masked, sigma_d=SIG_M_PHASE)  # Add log likelihood of TF phase.
+    a += BiF.likelihood_log_pdf(u=amp_m, d=amp_d_masked, sigma_d=SIG_M_AMP)  # Add log likelihood of TF amplitude.
+    a += BiF.likelihood_log_pdf(u=phase_m, d=phase_d_masked, sigma_d=SIG_M_PHASE)  # Add log likelihood of TF phase.
     return a  # Return log posterior PDF.
 
 
@@ -156,9 +156,9 @@ def main(mcmc_run=RUN_MCMC):
     """
     if mcmc_run:
         # Run MCMC.
-        theta_chain, p_chain, dct_seed = bi_f.mcmc_update(n_params=len(theta_0), posterior_log_pdf=posterior,
-                                                          theta_0=theta_0, n_samples=N_SAMPLES, seed=SEED,
-                                                          sigma_p=G_SD[PAR_SELECT], n_updates=N_UPDATES)
+        theta_chain, p_chain, dct_seed = BiF.mcmc_update(n_params=len(theta_0), posterior_log_pdf=posterior,
+                                                         theta_0=theta_0, n_samples=N_SAMPLES, seed=SEED,
+                                                         sigma_p=G_SD[PAR_SELECT], n_updates=N_UPDATES)
         # Make dictionaries to write to output file for MCMC.
         dct_conditions = {'C0': C0, 'NU': NU, 'GAMMA': GAMMA, 'PR': PR}
         dct_data = {'F_FLUSH': FILE_FLUSH, 'F_MIC': FILE_MIC, 'KEY_FLUSH_IN': IN_FLUSH, 'KEY_FLUSH_OUT': OUT_FLUSH,
@@ -186,13 +186,13 @@ def main(mcmc_run=RUN_MCMC):
     amp_m_0, phase_m_0 = model(theta_i=theta_0, w_arr=2*np.pi*f_arr)  # Initial guess model TF.
 
     # --- VISUALISATION ---
-    fig_tf, ax_tf = plot_f.plot_transfer_function_df(df=df_tf_flush, fig_dim=(4, 5), color='b', linestyle=':',
-                                                     alpha=1., prefix='Flush: ')
-    plot_f.plot_transfer_function_df(df=df_tf_mic, ax=ax_tf, color='r', linestyle='-.', alpha=0.5,
-                                     prefix='Mic: ')
-    plot_f.plot_transfer_function_df(df=df_tf_full, ax=ax_tf, color='k', linestyle='--', alpha=0.8,
-                                     prefix='Full: ', legend_loc='lower left', minor_phase=0.5, x_lim=(1E2, 13.5E3),
-                                     y_lim_amp=(0, 4), y_lim_phase=(-2*np.pi-0.1, 1*np.pi+0.3))
+    fig_tf, ax_tf = PlotF.plot_transfer_function_df(df=df_tf_flush, fig_dim=(4, 5), color='b', linestyle=':',
+                                                    alpha=1., prefix='Flush: ')
+    PlotF.plot_transfer_function_df(df=df_tf_mic, ax=ax_tf, color='r', linestyle='-.', alpha=0.5,
+                                    prefix='Mic: ')
+    PlotF.plot_transfer_function_df(df=df_tf_full, ax=ax_tf, color='k', linestyle='--', alpha=0.8,
+                                    prefix='Full: ', legend_loc='lower left', minor_phase=0.5, x_lim=(1E2, 13.5E3),
+                                    y_lim_amp=(0, 4), y_lim_phase=(-2*np.pi-0.1, 1*np.pi+0.3))
 
     ax_tf[0].plot(f_arr, amp_m_0, color='g', linestyle=':', label=r'$\theta_0$')  # Initial guess.
     ax_tf[1].plot(f_arr, phase_m_0, color='g', linestyle=':', label=r'$\theta_0$')

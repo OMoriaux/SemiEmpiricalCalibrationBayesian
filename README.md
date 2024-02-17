@@ -50,6 +50,6 @@ These are Jupyter notebooks that aim to explain in a more step-by-step method th
 - Pandas (calibration/measurement data files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
 - Optional: npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
-If npTDMS is not installed, can still read data from CSV files.
+If npTDMS is not installed, the functions and classes of *CalibrationMeasurement* can still read data from CSV files.
 
 ! npTDMS will need to be installed to read TDMS files. Either install the package in the user's preferred manner or simply run ">>> pip install npTDMS" in the Python console.

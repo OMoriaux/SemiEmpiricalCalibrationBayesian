@@ -14,7 +14,7 @@ Required Python install and packages:
 - Scipy >= 1.6.0
 - Matplotlib >= 3.4.1
 - Seaborn >= 0.12.0
-- Pandas (tdms files are read into Pandas DataFrames, arrays with named columns) >= 1.2.0
+- Pandas (TDMS or CSV files are read into Pandas DataFrames, i.e. arrays with named columns and rows) >= 1.2.0
 - Optional: npTDMS (reads LabVIEW VI output files, i.e. tdms files) >= 1.4.0
 
 __________________________________________________________________________________
@@ -28,7 +28,8 @@ try:
     from packaging.version import parse as parse_version
 except ModuleNotFoundError:
     warnings.warn("packaging package is not found. "
-                  "This is used to test if the required packages are installed. Code works without."
+                  "This is used to test if the required packages are installed. "
+                  "Code works without, comment out line 57-73."
                   "Can install package, e.g., using in console >>> pip install packaging", ImportWarning)
 # Import the various HelperFunction files.
 from . import BerghTijdemanWhitmoreModels
@@ -61,7 +62,7 @@ if 'parse_version' in globals():
                 ("pandas", "1.2.0"),
                 ("matplotlib", "3.4.1"),
                 ("seaborn", "0.12.0")  # ,
-                # ("nptdms", "1.4.0")  # Optional now
+                # ("nptdms", "1.4.0")  # Optional now that CSV files can be read instead of TDMS.
         ]:
             module = importlib.import_module(modname)
             if parse_version(module.__version__) < parse_version(minver):

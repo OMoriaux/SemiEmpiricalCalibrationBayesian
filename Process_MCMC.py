@@ -18,8 +18,8 @@ import matplotlib
 import numpy as np
 import pandas as pd
 # - Other code files (either own code, or from source listed in doc-string of function).
-import Source.PlottingFunctions as plot_f
-import Source.CalibrationMeasurement as cal_c
+import Source.PlottingFunctions as PlotF
+import Source.CalibrationMeasurement as CalM
 # import Processing_Helper_Functions as p_hf
 # --- CASE TO PROCESS ---
 from BK_Pinhole_MCMC import model_bt, model_w
@@ -85,14 +85,14 @@ matplotlib.rcParams.update({'font.size': 12, "font.family": 'sans-serif', "font.
 # --- CHAIN ---
 # Parameter value chain (in the y-axis), x-axis is the iteration number.
 if PLOT_CHAIN:
-    fig_chain, ax_chain = plot_f.plot_chain_df(df=df_chain, n_burn_in=N_BURN_IN, log_mode=LOG_MODE)
+    fig_chain, ax_chain = PlotF.plot_chain_df(df=df_chain, n_burn_in=N_BURN_IN, log_mode=LOG_MODE)
     if SAVE_FIG:
         fig_chain.savefig(NAME_OUT + '_Chain.png', dpi=600, transparent=False)
 
 # --- KDE ---
 # Kernel Density Estimate. Estimates the posterior PDF from the MCMC samples (of the posterior).
 if PLOT_KDE:
-    g_kde = plot_f.plot_kde_df(
+    g_kde = PlotF.plot_kde_df(
         df=df_chain.iloc[N_BURN_IN:, :],
         kwargs_for_pair_grid=None,
         kwargs_for_seaborn_theme={'style': 'whitegrid'})
@@ -107,8 +107,8 @@ if PLOT_KDE:
 if PLOT_TF:
     # Calibration data.
     dct_data = dct_mcmc['DATA']
-    cal_flush = cal_c.PressureAcquisition(dct_data['F_FLUSH'], safe_read=False)
-    cal_mic = cal_c.PressureAcquisition(dct_data['F_MIC'], safe_read=False)
+    cal_flush = CalM.PressureAcquisition(dct_data['F_FLUSH'], safe_read=False)
+    cal_mic = CalM.PressureAcquisition(dct_data['F_MIC'], safe_read=False)
     cal_mic.set_sensitivities(dct_channel_sensitivity=dct_data['S_DCT'], strict_mode=True, dct_prop_str_new_val=None)
     df_tf_flush = cal_flush.transfer_function(
         in_channel=dct_data['KEY_FLUSH_IN'], out_channel=dct_data['KEY_FLUSH_OUT'], set_property=True)
@@ -141,7 +141,7 @@ if PLOT_TF:
     amp_m_map, phase_m_map = model(theta_i=theta_map, w_arr=w_arr, theta_long=theta_full, par_idx=idx_select)
 
     # Plotting.
-    fig_tf, ax_tf = plot_f.plot_transfer_function_df(
+    fig_tf, ax_tf = PlotF.plot_transfer_function_df(
         df=df_tf_full, fig_dim=(4, 5), color='k', linestyle='--', alpha=0.8, minor_phase=0.25,
         x_lim=(1E2, 13.5E3), y_lim_amp=(0, 4), y_lim_phase=(-1*np.pi-0.1, 0.1))
     # Initial guess.
