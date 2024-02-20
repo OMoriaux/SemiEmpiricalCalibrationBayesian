@@ -15,7 +15,7 @@ The code is meant to explain the presented method, and highlight its strengths.
 The core functions of the method are written in the Source directory. 
 - **BayesianInferenceFunctions**: Code used to couple data with models using Bayesian Inference (BI); Metropolis-Hastings (MH), Markov-chain Monte Carlo (MCMC).
 - **BerghTijdemanWhitmoreModels**: Implementations of the Bergh & Tijdeman [1965] and Whitmore [2006] models.
-- **CalibrationMeasurement**: Code used to ingest calibration and unsteady pressure measurement data from TDMS files. ! REQUIRES npTDMS
+- **CalibrationMeasurement**: Code used to ingest calibration and unsteady pressure measurement data from TDMS or CSV files. ! Reading TDMS files requires the npTDMS Python package.
 - **PlottingFunctions**: Functions used to plot the results of the calibration/measurement data and MCMC fitting results.
 - **ProcessingFunctions**: Functions to process the calibration/measurement data (TDMS or CSV files) into power spectral density, transfer functions etc.
 
