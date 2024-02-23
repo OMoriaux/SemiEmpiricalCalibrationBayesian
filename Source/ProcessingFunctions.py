@@ -10,13 +10,13 @@ import numpy.typing as npt
 from typing import Union, Iterable, Tuple
 
 # Some typing.
-type_arr_etc = Union[DataFrame, npt.ArrayLike, Iterable, int, float]
-type_tuple_of_arrays = Tuple[Union[DataFrame, npt.NDArray[float]], Union[DataFrame, npt.NDArray[float]]]
+TYPE_ARR_ETC = Union[DataFrame, npt.ArrayLike, Iterable, int, float]
+TYPE_TUPLE_OF_ARRAYS = Tuple[Union[DataFrame, npt.NDArray[float]], Union[DataFrame, npt.NDArray[float]]]
 
 
 # *** DATA PROCESSING ***
 def frequency_response(complex_pressure_ratio: Union[DataFrame, npt.NDArray[complex], Iterable, int, float, complex],
-                       phase_deg_bool: bool = False, unwrap_phase: bool = True, **kwargs) -> type_tuple_of_arrays:
+                       phase_deg_bool: bool = False, unwrap_phase: bool = True, **kwargs) -> TYPE_TUPLE_OF_ARRAYS:
     """
     Get amplitude and phase arrays from complex pressure ratio array.
 
@@ -40,7 +40,7 @@ def frequency_response(complex_pressure_ratio: Union[DataFrame, npt.NDArray[comp
     return pr_mag, pr_phase
 
 
-def tf_estimate(x: type_arr_etc, y: type_arr_etc, fs: float, **kwargs) \
+def tf_estimate(x: TYPE_ARR_ETC, y: TYPE_ARR_ETC, fs: float, **kwargs) \
         -> Tuple[Union[DataFrame, npt.NDArray[float]], Union[DataFrame, npt.NDArray[complex]]]:
     """
     'Transfer function estimate' function from MATLAB. Not all features are implemented.
@@ -63,7 +63,7 @@ def tf_estimate(x: type_arr_etc, y: type_arr_etc, fs: float, **kwargs) \
     return freq, tfe
 
 
-def f_psd(data: type_arr_etc, fs: float = 51200., **kwargs) -> type_tuple_of_arrays:
+def f_psd(data: TYPE_ARR_ETC, fs: float = 51200., **kwargs) -> TYPE_TUPLE_OF_ARRAYS:
     """
     Computes power spectral density of signal.
 
@@ -78,7 +78,7 @@ def f_psd(data: type_arr_etc, fs: float = 51200., **kwargs) -> type_tuple_of_arr
     return sp.signal.welch(x=data, fs=fs, **kwargs)  # f, psd
 
 
-def f_spectra(data_psd: type_arr_etc, p_ref: float = 2E-5) -> Union[DataFrame, npt.NDArray]:
+def f_spectra(data_psd: TYPE_ARR_ETC, p_ref: float = 2E-5) -> Union[DataFrame, npt.NDArray]:
     """
     Computes spectrum of data, based on PSD data.
 
@@ -90,7 +90,7 @@ def f_spectra(data_psd: type_arr_etc, p_ref: float = 2E-5) -> Union[DataFrame, n
     return 10 * np.log10(data_psd*p_ref**-2)  # [dB/Hz] or [dB/St] or whatever units of f_tf and fs.
 
 
-def f_coherence(x: type_arr_etc, y: type_arr_etc, fs: float = 51200, **kwargs) -> type_tuple_of_arrays:
+def f_coherence(x: TYPE_ARR_ETC, y: TYPE_ARR_ETC, fs: float = 51200, **kwargs) -> TYPE_TUPLE_OF_ARRAYS:
     """
     Computes cross-coherence between x - and y data arrays.
 

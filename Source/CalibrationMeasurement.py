@@ -30,7 +30,7 @@ from typing import Union, Tuple, Any, Optional, Dict, List, Sequence
 
 # If npTDMS not imported, or use CSV file mode, then use Pandas read_csv instead.
 # Save all possible input parameters to that function for later.
-possible_read_csv_kwargs = inspect.signature(pd.read_csv).parameters.keys()
+POSSIBLE_READ_CSV_KWARGS = inspect.signature(pd.read_csv).parameters.keys()
 
 
 # TODO: Maybe define functions in a way that they, and the functions they are built on, don't crash when called
@@ -143,7 +143,7 @@ def get_all_properties(file_path: str) -> DataFrame:
 
 
 # Save all possible input parameters to that function for later.
-possible_tdms_safe_read_kwargs = inspect.signature(tdms_safe_read).parameters.keys()
+POSSIBLE_TDMS_SAFE_READ_KWARGS = inspect.signature(tdms_safe_read).parameters.keys()
 
 
 def general_data_file_reader(f_name: str, file_type: str = 'auto',
@@ -181,7 +181,7 @@ def general_data_file_reader(f_name: str, file_type: str = 'auto',
     if file_type.lower() == 'tdms':  # Either auto-detected a TDMS extension, or force TDMS file reader.
         if safe_read:  # Save (but slower) mode.
             # kwargs that can be provided to the 'tdms_safe_read' function.
-            kwargs_for_safe_read = {key_i: kwargs[key_i] for key_i in kwargs if key_i in possible_tdms_safe_read_kwargs}
+            kwargs_for_safe_read = {key_i: kwargs[key_i] for key_i in kwargs if key_i in POSSIBLE_TDMS_SAFE_READ_KWARGS}
             # If return_properties, dfs_out = (df_data, df_prop_data), else: dfs_out = df_data.
             dfs_out = tdms_safe_read(f_name=f_name, return_properties=return_properties, **kwargs_for_safe_read)
         else:  # Default mode.
@@ -194,7 +194,7 @@ def general_data_file_reader(f_name: str, file_type: str = 'auto',
     elif file_type.lower() == 'csv':  # Either auto-detected a CSV extension, or force CSV file reader.
         try:
             # Only kwargs that can be used by pd.read_csv.
-            kwargs_for_read_csv = {key_i: kwargs[key_i] for key_i in kwargs if key_i in possible_read_csv_kwargs}
+            kwargs_for_read_csv = {key_i: kwargs[key_i] for key_i in kwargs if key_i in POSSIBLE_READ_CSV_KWARGS}
             # Set default values, but don't overwrite if already provided in 'kwargs'.
             kwargs_for_read_csv = var_kwargs(var_str='index_col', default_val=0, kwargs=kwargs_for_read_csv)
             kwargs_for_read_csv = var_kwargs(var_str='header', default_val=[0, 1], kwargs=kwargs_for_read_csv)
