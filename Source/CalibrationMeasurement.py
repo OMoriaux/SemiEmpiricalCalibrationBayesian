@@ -335,7 +335,8 @@ class PressureAcquisition:
             list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == np.float64].index) +
             list(self.df_prop_data.loc[self.df_prop_data['dtypes'] == float].index),
             axis=0)
-        self.channel_float_type_dct = [tuple(elem) for elem in self.channel_float_type_dct]
+        # Go from 2D-array to list of tuples.
+        self.channel_float_type_dct = [(str(elem0), str(elem1)) for (elem0, elem1) in self.channel_float_type_dct]
 
         self.data_channel_names = list(self.df_prop_data.index)  # Get all the data DataFrame columns.
 
@@ -424,7 +425,19 @@ class PressureAcquisition:
 
         # Apply TF.
         f_int = np.fft.rfftfreq(n=self.df_data.loc[:, self.channel_float_type_dct].shape[axis], d=1 / self.fs)
-        tf_int = PchipInterpolator(df_tf_copy.index.to_numpy(), df_tf_copy.to_numpy(), axis=axis)(f_int)
+
+        # Before (Scipy < 1.13):
+        # tf_int = PchipInterpolator(df_tf_copy.index.to_numpy(), df_tf_copy.to_numpy(), axis=axis)(f_int)
+        # Now:
+        # - Compute real-valued amplitude and phase arrays (PchipInterpolator no longer does complex interpolation)
+        f_arr_copy = df_tf_copy.index.to_numpy()
+        amp_copy, phase_copy = ProcF.frequency_response(df_tf_copy.to_numpy(), axis=axis, unwrap_phase=True,
+                                                        phase_deg_bool=False)
+        # Interpolate amplitude and phase separately.
+        amp_int = PchipInterpolator(f_arr_copy, amp_copy, axis=axis)(f_int)
+        phase_int = PchipInterpolator(f_arr_copy, phase_copy, axis=axis)(f_int)
+        # Recombine into complex-valued transfer function.
+        tf_int = amp_int * np.exp(1j*phase_int)
 
         # FFT computation in frequency domain.
         # - Single-sided fourier transform
