@@ -628,12 +628,28 @@ class PressureAcquisition:
             f_current_arr = self.df_tf.index.to_numpy(float)  # Frequency array of current TF DataFrame.
             f_new_arr = df_tf_new.index.to_numpy(float)  # Frequency array of new TF DataFrame.
 
+            # Before (Scipy < 1.13):
+            # tf_new_int = PchipInterpolator(f_new_arr, tf_new_i, axis=axis)(f_current_arr)
+            # Now:
+            # - Compute real-valued amplitude and phase arrays (PchipInterpolator no longer does complex interpolation)
+            df_amp_copy, df_phase_copy = ProcF.frequency_response(df_tf_new, axis=axis, unwrap_phase=True,
+                                                                  phase_deg_bool=False)
             for channel_i in self.df_tf.columns:
                 tf_old_i = self.df_tf.loc[:, channel_i].to_numpy(complex)  # Current TF channel.
                 # New TF channel.
-                tf_new_i = df_tf_new.loc[:, dct_old_tf_to_new_tf_channels[channel_i]].to_numpy(complex)
+                amp_new_i = df_amp_copy.loc[:, dct_old_tf_to_new_tf_channels[channel_i]].to_numpy(float)
+                phase_new_i = df_phase_copy.loc[:, dct_old_tf_to_new_tf_channels[channel_i]].to_numpy(float)
+                # tf_new_i = df_tf_new.loc[:, dct_old_tf_to_new_tf_channels[channel_i]].to_numpy(complex)
+
                 # Interpolate new TF channel on old TF channel frequencies.
-                tf_new_int = PchipInterpolator(f_new_arr, tf_new_i, axis=axis)(f_current_arr)
+                # tf_new_int = PchipInterpolator(f_new_arr, tf_new_i, axis=axis)(f_current_arr)
+                # Interpolate amplitude and phase separately.
+                amp_new_int = PchipInterpolator(f_new_arr, amp_new_i, axis=axis)(f_current_arr)
+                phase_new_int = PchipInterpolator(f_new_arr, phase_new_i, axis=axis)(f_current_arr)
+
+                # Recombine into complex-valued transfer function.
+                tf_new_int = amp_new_int * np.exp(1j * phase_new_int)
+
                 self.df_tf.loc[:, channel_i] = tf_old_i * tf_new_int  # Multiply both and assign to (old) df_tf channel.
         return self.df_tf.copy(True)  # Return combined TF DataFrame.
 
