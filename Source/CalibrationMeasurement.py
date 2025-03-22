@@ -287,6 +287,9 @@ def get_type_dict_channels(df: DataFrame) -> dict:
     chan_lst = df.columns  # Get column names of DataFrame, e.g. (group_i, channel_j).
     ds_first_index = df.iloc[0, :]  # Only keep first row of DataFrame.
     type_lst = [type(elem) for elem in ds_first_index]  # Get type of first row element for all columns.
+    for i, type_i in enumerate(type_lst):
+        if type_i == np.datetime64 or type_i == 'datetime64':  # Numpy update wants to know precision [ns].
+            type_lst[i] = 'datetime64[ns]'
     return dict(zip(chan_lst, type_lst))  # Make dictionary: {..., column_name: data type, ...}.
 
 
